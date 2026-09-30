@@ -5,7 +5,7 @@ window.CURRICULUM_DATA = {
     "units": 200,
     "lessons": 165,
     "systems": 35,
-    "builds": 12
+    "builds": 15
   },
   "parts": [
     {

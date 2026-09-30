@@ -172,7 +172,7 @@ window.Quiz = (() => {
            }
         }
         
-        card.querySelectorAll('input, button:not(.quiz-next-btn)').forEach(el => el.disabled = true);
+        card.querySelectorAll('input, button:not(.quiz-next-btn):not(.check-slider__next)').forEach(el => el.disabled = true);
 
         // Show which option was right (and which pick was wrong)
         if (type === 'mcq') {
@@ -203,6 +203,7 @@ window.Quiz = (() => {
         if (window.Progress && window.Progress.recordQuizAttempt) {
            window.Progress.recordQuizAttempt(qid, correct);
         }
+        card.dispatchEvent(new CustomEvent('quiz:graded', { bubbles: true, detail: { qid, correct } }));
      } else if (e.target.closest('.quiz-next-btn')) {
         const btn = e.target.closest('.quiz-next-btn');
         const slug = btn.dataset.slug;
@@ -216,58 +217,94 @@ window.Quiz = (() => {
   });
 
   /**
-   * Compact self-check shown right after the section it tests (question.section = that <h2>'s text).
-   * Reuses the quiz-card grading handler above.
+   * "Check yourself" slider: this unit's section-anchored questions, one at a time.
+   * Each slide is a quiz-card, so grading goes through the shared handler above; the slider
+   * only reveals Next after an answer, and shows a score at the end.
    */
-  function renderInlineCheck(q, slug) {
-    return `
-      <aside class="quiz-card inline-check" id="quiz-${q.id}" data-type="${q.type}" data-slug="${slug}" aria-label="Check yourself">
-        <div class="inline-check__head">
-          <span class="inline-check__label">Check yourself</span>
-          <span class="inline-check__title">${escapeHtml(q.title || '')}</span>
-          <span class="inline-check__level">${escapeHtml(q.difficulty || '')}</span>
+  function renderCheckSlider(slug) {
+    const qs = (window.QUESTION_BANK?.[slug] || []).filter(q => q.section && q.type === 'mcq');
+    if (!qs.length) return '';
+    const slides = qs.map((q, i) => `
+      <div class="quiz-card check-slider__slide" id="quiz-${q.id}" data-type="${q.type}" data-slug="${slug}" data-index="${i}"${i ? ' hidden' : ''}>
+        <div class="check-slider__meta">
+          <span class="check-slider__title">${escapeHtml(q.title || '')}</span>
+          <span class="check-slider__level">${escapeHtml(q.difficulty || '')}</span>
         </div>
-        <p class="inline-check__prompt">${escapeHtml(q.prompt)}</p>
-        <div class="quiz-options inline-check__options">${renderOptions(q)}</div>
-        <button class="btn btn--sm btn--primary quiz-submit-btn" data-qid="${q.id}">Check answer</button>
-        <div class="exercise-feedback quiz-feedback inline-check__feedback" id="feedback-${q.id}" style="display: none;">
+        ${q.section ? `<div class="check-slider__section">From: ${escapeHtml(q.section)}</div>` : ''}
+        <p class="check-slider__prompt">${escapeHtml(q.prompt)}</p>
+        <div class="quiz-options check-slider__options">${renderOptions(q)}</div>
+        <div class="check-slider__actions">
+          <button class="btn btn--sm btn--primary quiz-submit-btn" data-qid="${q.id}">Check answer</button>
+          <button class="btn btn--sm btn--primary check-slider__next" hidden>${i === qs.length - 1 ? 'See score' : 'Next question →'}</button>
+        </div>
+        <div class="exercise-feedback quiz-feedback check-slider__feedback" id="feedback-${q.id}" style="display: none;">
           <div class="feedback-msg"></div>
           <div class="feedback-exp">${escapeHtml(q.explanation)}</div>
         </div>
-      </aside>`;
+      </div>`).join('');
+    return `
+      <section class="check-slider" data-slug="${slug}" data-total="${qs.length}" aria-label="Check yourself">
+        <div class="check-slider__head">
+          <span class="check-slider__label">Check yourself</span>
+          <span class="check-slider__count">Question <b>1</b> of ${qs.length}</span>
+          <span class="check-slider__dots">${qs.map((_, i) => `<span class="check-slider__dot${i ? '' : ' is-current'}"></span>`).join('')}</span>
+        </div>
+        <div class="check-slider__track">${slides}</div>
+        <div class="check-slider__done" hidden>
+          <p class="check-slider__score"></p>
+          <button class="btn btn--sm btn--outline check-slider__retry">Try again</button>
+        </div>
+      </section>`;
   }
 
-  const headingText = html => html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+  // Slider behaviour: reveal Next after grading, advance, score, retry
+  document.addEventListener('quiz:graded', e => {
+    const slide = e.target.closest('.check-slider__slide');
+    if (!slide) return;
+    slide.dataset.correct = e.detail.correct ? '1' : '0';
+    const slider = slide.closest('.check-slider');
+    slider.querySelectorAll('.check-slider__dot')[+slide.dataset.index]?.classList.add(e.detail.correct ? 'is-right' : 'is-wrong');
+    const next = slide.querySelector('.check-slider__next');
+    next.hidden = false;
+    next.focus({ preventScroll: true });
+  });
 
-  /**
-   * Insert this unit's section-anchored questions into lesson HTML, each at the end of its section
-   * (just before the next <h2>, or at the end of the content).
-   */
-  function insertInlineChecks(html, slug) {
-    const qs = (window.QUESTION_BANK?.[slug] || []).filter(q => q.section && q.type === 'mcq');
-    if (!qs.length || !html) return html;
-    const heads = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map(m => ({ at: m.index, end: m.index + m[0].length, text: headingText(m[1]) }));
-    const inserts = [];
-    for (const q of qs) {
-      const i = heads.findIndex(h => h.text === q.section);
-      if (i < 0) continue;
-      let pos = i + 1 < heads.length ? heads[i + 1].at : html.lastIndexOf('</div>');
-      if (pos < heads[i].end) pos = html.length;
-      inserts.push({ pos, html: renderInlineCheck(q, slug) });
+  document.addEventListener('click', e => {
+    const next = e.target.closest('.check-slider__next');
+    const retry = e.target.closest('.check-slider__retry');
+    if (!next && !retry) return;
+    const slider = (next || retry).closest('.check-slider');
+    const slides = [...slider.querySelectorAll('.check-slider__slide')];
+    const dots = [...slider.querySelectorAll('.check-slider__dot')];
+    const show = i => {
+      slides.forEach((s, j) => { s.hidden = j !== i; });
+      dots.forEach((d, j) => d.classList.toggle('is-current', j === i));
+      slider.querySelector('.check-slider__count').innerHTML = `Question <b>${i + 1}</b> of ${slides.length}`;
+      slider.querySelector('.check-slider__done').hidden = true;
+    };
+    if (retry) {
+      // Re-render fresh (ungraded) slides in place
+      const temp = document.createElement('div');
+      temp.innerHTML = renderCheckSlider(slider.dataset.slug);
+      slider.replaceWith(temp.firstElementChild);
+      return;
     }
-    // group by position (keeping question order), then apply from the end so earlier offsets stay valid
-    const grouped = new Map();
-    for (const ins of inserts) grouped.set(ins.pos, (grouped.get(ins.pos) || []).concat(ins.html));
-    let out = html;
-    for (const [pos, parts] of [...grouped.entries()].sort((a, b) => b[0] - a[0])) out = out.slice(0, pos) + parts.join('') + out.slice(pos);
-    return out;
-  }
+    const i = +next.closest('.check-slider__slide').dataset.index;
+    if (i + 1 < slides.length) { show(i + 1); return; }
+    const right = slides.filter(s => s.dataset.correct === '1').length;
+    slides.forEach(s => { s.hidden = true; });
+    dots.forEach(d => d.classList.remove('is-current'));
+    const done = slider.querySelector('.check-slider__done');
+    done.querySelector('.check-slider__score').textContent =
+      `You got ${right} of ${slides.length} right.` + (right === slides.length ? ' Nice work.' : ' Review the sections these came from and try again.');
+    slider.querySelector('.check-slider__count').textContent = 'Done';
+    done.hidden = false;
+  });
 
   return {
     hasQuestions,
     hasEndQuestions,
     renderQuiz,
-    renderInlineCheck,
-    insertInlineChecks
+    renderCheckSlider
   };
 })();

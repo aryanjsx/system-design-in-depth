@@ -9,8 +9,9 @@ A zero-build, client-side system design learning platform for senior and staff b
 - **182 Mermaid architecture diagrams** — CQRS pipelines, Redis Cluster topologies, LSM-tree flush paths, Raft election sequences
 - **470 hand-picked videos** — every unit has a topic-specific primary video plus quick-intro, deep-dive, interview and case-study picks (Kleppmann's Cambridge lectures, MIT 6.824, CMU DB, USENIX/Strange Loop/InfoQ talks, company engineering talks, ByteByteGo, Hussein Nasser, Arpit Bhayani, Hello Interview)
 - **Intuition-first primers** — every unit opens with a plain-language analogy, the one-line mental model, and common interview traps; most units also include a worked example with real numbers and a trade-off table
-- **12 from-scratch algorithm builds** — consistent hashing, bloom filters, WAL engine, LRU cache, snowflake IDs, and more
-- **Interactive simulators** — consistent hashing ring, rate-limit token bucket, cache eviction visualizer
+- **15 from-scratch builds** — load balancer, consistent hashing, rate limiters, LRU/TTL caches, Bloom filter, Snowflake IDs, keyset pagination, WAL, LSM-tree KV store, leases with fencing, gossip + SWIM, Merkle anti-entropy, HyperLogLog and a tiny search engine; each with a README, a runnable demo and a test suite (`node demo.js`, `node test.js`, zero dependencies)
+- **32 interactive simulators on 68 lessons** — consistent hashing, Raft elections, quorums (N/R/W), vector clocks, MVCC isolation anomalies, WAL crash recovery, load-balancing algorithms, cache stampedes, Count-Min Sketch, gossip, adaptive bitrate, SLO burn-rate alerts and more
+- **Check yourself** — 3 lesson-specific questions per unit in a one-at-a-time slider with explanations and a score
 - **Keyboard-first search** (`⌘K`) across all 200 topics
 - **Progress tracking** persisted in localStorage
 

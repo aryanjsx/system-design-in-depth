@@ -232,17 +232,20 @@ window.Renderer = (() => {
       const isPlaceholder = moduleContent?.content?.includes('This topic is covered in depth in the curriculum archive');
       if (moduleContent?.content && !isPlaceholder && !archiveContent.includes('Real-World Usage')) {
         html += '<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--divider);">';
-        html += '<div class="lesson-deep-dive">' + withChecks(moduleContent.content, slug) + '</div>';
+        html += '<div class="lesson-deep-dive">' + moduleContent.content + '</div>';
       }
     } else if (moduleContent?.content) {
       // Use comprehensive generated module content
-      html += withChecks(moduleContent.content, slug);
+      html += moduleContent.content;
     } else {
       // Fallback
       html += renderFallbackContent(unit, mod);
     }
 
     html += '</article>';
+
+    // Check yourself: this lesson's questions as a one-at-a-time slider
+    if (window.Quiz?.renderCheckSlider) html += window.Quiz.renderCheckSlider(slug);
 
     // Interactive Visual Simulator (if applicable for unit)
     if (window.Simulators && window.Simulators.getSimulatorForUnit) {
@@ -265,6 +268,9 @@ window.Renderer = (() => {
           </div>
         </div>`;
     }
+
+    // From-scratch builds for this lesson
+    html += renderLessonBuilds(slug);
 
     // Further reading
     if (moduleContent?.furtherReading?.length) {
@@ -291,6 +297,39 @@ window.Renderer = (() => {
     return html;
   }
 
+  // Order build files: README first, then implementation, demo, tests
+  const buildFileRank = f => (/readme/i.test(f) ? 0 : /^demo\b|\/demo\b/i.test(f) ? 2 : /test/i.test(f) ? 3 : 1);
+  const orderedBuildFiles = files => Object.entries(files || {}).sort((a, b) => buildFileRank(a[0]) - buildFileRank(b[0]));
+
+  // Lesson title lookup for cross-links
+  function findUnitTitle(slug) {
+    for (const p of window.CURRICULUM_DATA?.parts || []) for (const m of p.modules) for (const u of m.units) if (u.slug === slug) return u.title;
+    return null;
+  }
+
+  /**
+   * Builds that teach this lesson (primarySlug or relatedSlugs)
+   */
+  function buildsForLesson(slug) {
+    return Object.entries(window.IMPLEMENTATIONS_DATA || {})
+      .filter(([, b]) => b.primarySlug === slug || (b.relatedSlugs || []).includes(slug))
+      .sort((a, b) => (a[1].primarySlug === slug ? 0 : 1) - (b[1].primarySlug === slug ? 0 : 1));
+  }
+
+  function renderLessonBuilds(slug) {
+    const builds = buildsForLesson(slug);
+    if (!builds.length) return '';
+    return `
+      <div class="lesson-builds">
+        <h3 class="lesson-builds__title">${icons.code} Build it from scratch</h3>
+        ${builds.map(([id, b]) => `
+          <a class="lesson-builds__item" href="#build/${id}" onclick="event.preventDefault(); App.navigateToBuild('${id}')">
+            <span class="lesson-builds__name">${escapeHtml(b.title || id)}</span>
+            ${b.summary ? `<span class="lesson-builds__summary">${escapeHtml(b.summary)}</span>` : ''}
+          </a>`).join('')}
+      </div>`;
+  }
+
   /**
    * Render a Build (Implementation) View
    */
@@ -299,33 +338,48 @@ window.Renderer = (() => {
     if (!impls || !impls[buildId]) return '<p>Build not found.</p>';
 
     const build = impls[buildId];
-    const files = build.files || {};
+    const files = orderedBuildFiles(build.files);
+    const lessons = [build.primarySlug, ...(build.relatedSlugs || [])].filter(Boolean)
+      .map(s => ({ slug: s, title: findUnitTitle(s) })).filter(l => l.title);
+    const demoFile = files.find(([f]) => /(^|\/)demo\.js$/i.test(f))?.[0];
+    const testFile = files.find(([f]) => /(^|\/)test\.js$/i.test(f))?.[0];
 
     let html = `
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="#" data-nav="home">Home</a>
         <span class="breadcrumbs__sep">${icons.chevronRight}</span>
-        <span class="breadcrumbs__current">${build.title || buildId}</span>
+        <span class="breadcrumbs__current">${escapeHtml(build.title || buildId)}</span>
       </nav>
 
       <div class="lesson-header">
         <div class="lesson-header__badge">
           <span class="lesson-header__kind lesson-header__kind--build">${icons.code} Build</span>
         </div>
-        <h1 class="lesson-header__title">${build.title || buildId.replace(/-/g, ' ')}</h1>
-      </div>`;
+        <h1 class="lesson-header__title">${escapeHtml(build.title || buildId.replace(/-/g, ' '))}</h1>
+        ${build.summary ? `<p class="build-summary">${escapeHtml(build.summary)}</p>` : ''}
+        ${lessons.length ? `<div class="lesson-header__meta">${icons.book} Lesson${lessons.length > 1 ? 's' : ''}: ${lessons.map(l =>
+          `<a href="#" data-nav="topic" data-slug="${l.slug}">${escapeHtml(l.title)}</a>`).join(', ')}</div>` : ''}
+      </div>
 
-    // Render each file
-    for (const [filename, content] of Object.entries(files)) {
-      const lang = filename.endsWith('.js') ? 'javascript' : filename.endsWith('.md') ? 'markdown' : 'text';
+      <div class="build-run">
+        <div class="build-run__text">
+          <strong>Run it locally</strong> (Node 18+, no dependencies): save the files below into one folder, or paste the setup script into a terminal. Then run
+          ${[demoFile, testFile].filter(Boolean).map(f => '<code>node ' + escapeHtml(f) + '</code>').join(' and ')}.
+        </div>
+        <button class="btn btn--sm btn--outline" onclick="copyBuildScript('${buildId}', this)">Copy setup script</button>
+      </div>
 
+      <div class="build-files">${files.map(([f]) => `<a href="#" class="build-files__item" onclick="event.preventDefault(); document.getElementById('build-file-${buildId}-${f.replace(/[^\w-]/g, '_')}')?.scrollIntoView({behavior:'smooth'})">${escapeHtml(f)}</a>`).join('')}</div>`;
+
+    for (const [filename, content] of files) {
+      const anchor = `build-file-${buildId}-${filename.replace(/[^\w-]/g, '_')}`;
       if (filename.endsWith('.md')) {
-        html += '<article class="prose">' + convertMarkdownToHTML(content) + '</article>';
+        html += `<article class="prose" id="${anchor}">` + convertMarkdownToHTML(content) + '</article>';
       } else {
         html += `
-          <div class="code-block">
+          <div class="code-block" id="${anchor}">
             <div class="code-block__header">
-              <span class="code-block__lang">${filename}</span>
+              <span class="code-block__lang">${escapeHtml(filename)}</span>
               <button class="code-block__copy" onclick="copyCode(this)">Copy</button>
             </div>
             <pre><code>${escapeHtml(content)}</code></pre>
@@ -336,25 +390,49 @@ window.Renderer = (() => {
     return html;
   }
 
+  // One paste recreates the build folder: mkdir + a quoted heredoc per file (no shell expansion inside)
+  window.copyBuildScript = function(buildId, btn) {
+    const build = window.IMPLEMENTATIONS_DATA?.[buildId];
+    if (!build) return;
+    const lines = [`mkdir -p ${buildId} && cd ${buildId}`];
+    for (const [f, c] of orderedBuildFiles(build.files)) {
+      const dir = f.includes('/') ? f.slice(0, f.lastIndexOf('/')) : '';
+      if (dir) lines.push(`mkdir -p ${dir}`);
+      lines.push(`cat > ${f} <<'SDID_EOF'`, c.replace(/\n$/, ''), 'SDID_EOF');
+    }
+    navigator.clipboard.writeText(lines.join('\n') + '\n').then(() => {
+      btn.textContent = '✓ Copied';
+      setTimeout(() => { btn.textContent = 'Copy setup script'; }, 2000);
+    });
+  };
+
+
   /**
    * Render YouTube video embed (lazy-loaded)
    */
   function renderVideoEmbed(video) {
     if (!video?.youtubeId) return '';
-    return `
-      <div class="video-embed" id="video-${video.youtubeId}">
-        <div class="video-embed__placeholder" onclick="loadYouTubeVideo('${video.youtubeId}', this.parentElement)">
-          <img src="https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg"
+    return `<div class="video-main" data-video="${escapeHtml(JSON.stringify(video))}">${renderMainVideoInner(video, false)}</div>`;
+  }
+
+  // Player + caption for the main video; autoplay loads the iframe straight away (used when swapping in)
+  function renderMainVideoInner(video, autoplay) {
+    const id = video.youtubeId;
+    const player = autoplay
+      ? `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+      : `<div class="video-embed__placeholder" onclick="loadYouTubeVideo('${id}', this.parentElement)">
+          <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg"
                alt="${escapeHtml(video.title || '')}"
                loading="lazy"
-               onerror="this.src='https://img.youtube.com/vi/${video.youtubeId}/default.jpg'">
+               onerror="this.src='https://img.youtube.com/vi/${id}/default.jpg'">
           <div class="video-embed__play-btn">${icons.play}</div>
-        </div>
-      </div>
+        </div>`;
+    return `
+      <div class="video-embed" id="video-${id}">${player}</div>
       ${video.title ? `<div class="video-embed__info">
         <span class="video-embed__channel">${escapeHtml(video.channel || 'YouTube')}</span>
         <span class="video-embed__title">${escapeHtml(video.title)}</span>
-        <a href="https://www.youtube.com/watch?v=${video.youtubeId}" target="_blank" rel="noopener noreferrer" style="margin-left:auto; font-size:11px; color:var(--accent,#6366f1); text-decoration:none; display:flex; align-items:center; gap:2px;">
+        <a href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener noreferrer" style="margin-left:auto; font-size:11px; color:var(--accent,#6366f1); text-decoration:none; display:flex; align-items:center; gap:2px;">
           Watch on YouTube ↗
         </a>
       </div>` : ''}
@@ -364,27 +442,23 @@ window.Renderer = (() => {
   // Units with a data/archive/<slug>.js file; requesting any other slug 404s. Keep in sync with data/archive/.
   const ARCHIVE_SLUGS = new Set(["adaptive-bitrate-and-cdn-decider","availability-durability-consistency-cost","back-of-the-envelope-capacity-planning","blocklist-versioned-file-metadata","boolean-tiered-search","byte-range-indexed-object-storage","caching-layers","clock-skew-and-id-ordering","concurrency-vs-parallelism","database-ticket-servers","file-backed-dictionary-storage-engine","logical-system-design","mergeable-sketches-for-analytics","newly-unread-indicator","non-functional-requirements","notification-system-design","parallel-monolith-read-drain","partition-manager-and-map-table","photo-tagging-coordinate-model","requirements-clarification","rule-engine-trigger-framework","social-graph-follows-and-flockdb","stop-words-and-champion-lists","system-design-tradeoffs","tcp-vs-udp","tdigest-quantile-sketch","when-not-to-add-infrastructure"]);
 
-  // Section-anchored self-check questions (see Quiz.insertInlineChecks)
-  const withChecks = (content, slug) => window.Quiz?.insertInlineChecks ? window.Quiz.insertInlineChecks(content, slug) : content;
-
   const VIDEO_ROLE_LABELS = {
+    primary: 'Main pick',
     intro: 'Quick intro',
     'deep-dive': 'Deep dive',
     interview: 'Interview walkthrough',
     'case-study': 'Case study'
   };
 
-  /**
-   * Render supplementary videos (intro / deep-dive / interview / case-study)
-   */
-  function renderMoreVideos(videos) {
-    if (!Array.isArray(videos) || !videos.length) return '';
-    const cards = videos.filter(v => v?.youtubeId).map(v => `
+  // A card still links to YouTube (ctrl/cmd/middle-click open a tab); a plain click plays it in the main player
+  function renderMoreVideoCard(v) {
+    return `
       <a class="video-more__card" href="https://www.youtube.com/watch?v=${v.youtubeId}" target="_blank" rel="noopener noreferrer"
-         onclick="if (window.Analytics?.trackVideoPlay) window.Analytics.trackVideoPlay('${v.youtubeId}', this.dataset.title)"
-         data-title="${escapeHtml(v.title || '')}">
+         onclick="return playInMainVideo(event, this)" data-video="${escapeHtml(JSON.stringify(v))}"
+         title="Play here (Ctrl/⌘-click to open on YouTube)">
         <span class="video-more__thumb">
           <img src="https://img.youtube.com/vi/${v.youtubeId}/mqdefault.jpg" alt="" loading="lazy">
+          <span class="video-more__play">${icons.play}</span>
           ${v.length ? `<span class="video-more__len">${escapeHtml(v.length)}</span>` : ''}
         </span>
         <span class="video-more__meta">
@@ -393,13 +467,39 @@ window.Renderer = (() => {
           <span class="video-more__channel">${escapeHtml(v.channel || 'YouTube')}</span>
           ${v.why ? `<span class="video-more__why">${escapeHtml(v.why)}</span>` : ''}
         </span>
-      </a>`).join('');
+      </a>`;
+  }
+
+  /**
+   * Render supplementary videos (intro / deep-dive / interview / case-study)
+   */
+  function renderMoreVideos(videos) {
+    if (!Array.isArray(videos) || !videos.length) return '';
+    const cards = videos.filter(v => v?.youtubeId).map(renderMoreVideoCard).join('');
     return cards ? `
       <div class="video-more">
         <h3 class="video-more__heading">More videos on this topic</h3>
         <div class="video-more__list">${cards}</div>
       </div>` : '';
   }
+
+  // Swap a card's video into the main player (and the current main video into that card's slot)
+  window.playInMainVideo = function(event, card) {
+    const next = JSON.parse(card.dataset.video || 'null');
+    if (!next) return true;
+    if (window.Analytics?.trackVideoPlay) window.Analytics.trackVideoPlay(next.youtubeId, next.title || '');
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button === 1) return true; // let the link open YouTube
+    const main = document.querySelector('.video-main');
+    if (!main) return true;
+    event.preventDefault();
+    const prev = JSON.parse(main.dataset.video || 'null');
+    main.dataset.video = JSON.stringify(next);
+    main.innerHTML = renderMainVideoInner(next, true);
+    if (prev) card.outerHTML = renderMoreVideoCard({ ...prev, role: prev.role || 'primary' });
+    const top = main.getBoundingClientRect().top;
+    if (top < 0 || top > window.innerHeight * 0.6) main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return false;
+  };
 
   /**
    * Convert basic markdown to HTML
