@@ -5,7 +5,7 @@ A notification service turns a product event into messages for particular people
 
 We'll follow that report from the product database to its recipients, then handle preference changes, lost send replies and a large announcement. The design starts with email and an in-app inbox. Push and SMS share the routing machinery, but need their own delivery rules.
 
-![An email provider's tray holds one envelope labeled Accepted. A person looking at an empty inbox says Still waiting. Provider acceptance does not establish arrival in the recipient's inbox.](/course-assets/system-design/illustrations/notification-accepted.webp)
+
 
 ## Decide what the service promises
 
@@ -150,7 +150,7 @@ Measure oldest eligible intent age per lane, provider throttles, unknown-attempt
 
 ## Run the smaller recovery experiment
 
-The [notification example](/course-assets/system-design/m14-notifications.py) isolates four intents in private SQLite files. Ada gets email and an inbox item. Bo starts with email disabled; Cy opts out after routing. A separate fake provider accepts Ada's email and deliberately loses the reply.
+The notification example isolates four intents in private SQLite files. Ada gets email and an inbox item. Bo starts with email disabled; Cy opts out after routing. A separate fake provider accepts Ada's email and deliberately loses the reply.
 
 It makes local Python calls and sends no email. Its provider keys never expire. It implements neither a worker pool nor automatic recovery from abandoned \`sending\` claims; those remain production requirements described above.
 

@@ -38,7 +38,7 @@ Choose the default from what the caller asked for:
 
 The allowed set contains \`d1\`, \`d2\`, \`d4\`, \`d5\` and \`d8\`. Documents \`d3\`, \`d6\` and \`d7\` remain in the corpus but are excluded from this response. The exclusion is deliberately visible so you can follow a broadening attempt without confusing candidate generation with access permission.
 
-The [shared Python replay](/course-assets/system-design/m16-search.py) executes the rules directly against the [eight chosen documents](/course-assets/system-design/m16-corpus.json). In the capture, each tuple pairs a document identifier with its tier number. Empty input has an explicit empty-result rule, so it does not turn into a request for every permitted document.
+The shared Python replay executes the rules directly against the eight chosen documents. In the capture, each tuple pairs a document identifier with its tier number. Empty input has an explicit empty-result rule, so it does not turn into a request for every permitted document.
 
 \`\`\`bash title="terminal"
 python3 public/course-assets/system-design/m16-search.py boolean

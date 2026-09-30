@@ -5,8 +5,15 @@ window.Quiz = (() => {
     return window.QUESTION_BANK && window.QUESTION_BANK[slug] && window.QUESTION_BANK[slug].length > 0;
   }
   
+  // End-of-lesson questions: those not already placed inline after a section
+  const endQuestions = slug => (window.QUESTION_BANK?.[slug] || []).filter(q => !q.section);
+
+  function hasEndQuestions(slug) {
+    return endQuestions(slug).length > 0;
+  }
+
   function getNextQuestion(slug) {
-    const questions = window.QUESTION_BANK[slug];
+    const questions = endQuestions(slug);
     const available = questions.filter(q => !seenQuestions.has(q.id));
     if (available.length === 0) {
       questions.forEach(q => seenQuestions.delete(q.id));
@@ -28,6 +35,7 @@ window.Quiz = (() => {
   function renderQuiz(slug) {
     if (!hasQuestions(slug)) return '';
     
+    if (!hasEndQuestions(slug)) return '';
     const q = getNextQuestion(slug);
     seenQuestions.add(q.id);
     
@@ -164,7 +172,17 @@ window.Quiz = (() => {
            }
         }
         
-        card.querySelectorAll('input, button:not(.quiz-next-btn)').forEach(el => el.disabled = true);
+        card.querySelectorAll('input, button:not(.quiz-next-btn):not(.check-slider__next)').forEach(el => el.disabled = true);
+
+        // Show which option was right (and which pick was wrong)
+        if (type === 'mcq') {
+          card.querySelectorAll(`input[name="quiz-${qid}"]`).forEach(inp => {
+            const label = inp.closest('.quiz-option-label');
+            if (!label) return;
+            if (parseInt(inp.value) === q.answer) label.classList.add('correct');
+            else if (inp.checked) label.classList.add('incorrect');
+          });
+        }
         
         const fb = card.querySelector('.exercise-feedback');
         const msg = fb.querySelector('.feedback-msg');
@@ -178,12 +196,14 @@ window.Quiz = (() => {
           msg.innerHTML = '<strong>✗ Incorrect.</strong>';
         }
         
-        card.querySelector('.quiz-next-btn').style.display = 'inline-block';
+        const nextBtn = card.querySelector('.quiz-next-btn');
+        if (nextBtn) nextBtn.style.display = 'inline-block';
         btn.style.display = 'none';
         
         if (window.Progress && window.Progress.recordQuizAttempt) {
            window.Progress.recordQuizAttempt(qid, correct);
         }
+        card.dispatchEvent(new CustomEvent('quiz:graded', { bubbles: true, detail: { qid, correct } }));
      } else if (e.target.closest('.quiz-next-btn')) {
         const btn = e.target.closest('.quiz-next-btn');
         const slug = btn.dataset.slug;
@@ -196,8 +216,95 @@ window.Quiz = (() => {
      }
   });
 
+  /**
+   * "Check yourself" slider: this unit's section-anchored questions, one at a time.
+   * Each slide is a quiz-card, so grading goes through the shared handler above; the slider
+   * only reveals Next after an answer, and shows a score at the end.
+   */
+  function renderCheckSlider(slug) {
+    const qs = (window.QUESTION_BANK?.[slug] || []).filter(q => q.section && q.type === 'mcq');
+    if (!qs.length) return '';
+    const slides = qs.map((q, i) => `
+      <div class="quiz-card check-slider__slide" id="quiz-${q.id}" data-type="${q.type}" data-slug="${slug}" data-index="${i}"${i ? ' hidden' : ''}>
+        <div class="check-slider__meta">
+          <span class="check-slider__title">${escapeHtml(q.title || '')}</span>
+          <span class="check-slider__level">${escapeHtml(q.difficulty || '')}</span>
+        </div>
+        ${q.section ? `<div class="check-slider__section">From: ${escapeHtml(q.section)}</div>` : ''}
+        <p class="check-slider__prompt">${escapeHtml(q.prompt)}</p>
+        <div class="quiz-options check-slider__options">${renderOptions(q)}</div>
+        <div class="check-slider__actions">
+          <button class="btn btn--sm btn--primary quiz-submit-btn" data-qid="${q.id}">Check answer</button>
+          <button class="btn btn--sm btn--primary check-slider__next" hidden>${i === qs.length - 1 ? 'See score' : 'Next question →'}</button>
+        </div>
+        <div class="exercise-feedback quiz-feedback check-slider__feedback" id="feedback-${q.id}" style="display: none;">
+          <div class="feedback-msg"></div>
+          <div class="feedback-exp">${escapeHtml(q.explanation)}</div>
+        </div>
+      </div>`).join('');
+    return `
+      <section class="check-slider" data-slug="${slug}" data-total="${qs.length}" aria-label="Check yourself">
+        <div class="check-slider__head">
+          <span class="check-slider__label">Check yourself</span>
+          <span class="check-slider__count">Question <b>1</b> of ${qs.length}</span>
+          <span class="check-slider__dots">${qs.map((_, i) => `<span class="check-slider__dot${i ? '' : ' is-current'}"></span>`).join('')}</span>
+        </div>
+        <div class="check-slider__track">${slides}</div>
+        <div class="check-slider__done" hidden>
+          <p class="check-slider__score"></p>
+          <button class="btn btn--sm btn--outline check-slider__retry">Try again</button>
+        </div>
+      </section>`;
+  }
+
+  // Slider behaviour: reveal Next after grading, advance, score, retry
+  document.addEventListener('quiz:graded', e => {
+    const slide = e.target.closest('.check-slider__slide');
+    if (!slide) return;
+    slide.dataset.correct = e.detail.correct ? '1' : '0';
+    const slider = slide.closest('.check-slider');
+    slider.querySelectorAll('.check-slider__dot')[+slide.dataset.index]?.classList.add(e.detail.correct ? 'is-right' : 'is-wrong');
+    const next = slide.querySelector('.check-slider__next');
+    next.hidden = false;
+    next.focus({ preventScroll: true });
+  });
+
+  document.addEventListener('click', e => {
+    const next = e.target.closest('.check-slider__next');
+    const retry = e.target.closest('.check-slider__retry');
+    if (!next && !retry) return;
+    const slider = (next || retry).closest('.check-slider');
+    const slides = [...slider.querySelectorAll('.check-slider__slide')];
+    const dots = [...slider.querySelectorAll('.check-slider__dot')];
+    const show = i => {
+      slides.forEach((s, j) => { s.hidden = j !== i; });
+      dots.forEach((d, j) => d.classList.toggle('is-current', j === i));
+      slider.querySelector('.check-slider__count').innerHTML = `Question <b>${i + 1}</b> of ${slides.length}`;
+      slider.querySelector('.check-slider__done').hidden = true;
+    };
+    if (retry) {
+      // Re-render fresh (ungraded) slides in place
+      const temp = document.createElement('div');
+      temp.innerHTML = renderCheckSlider(slider.dataset.slug);
+      slider.replaceWith(temp.firstElementChild);
+      return;
+    }
+    const i = +next.closest('.check-slider__slide').dataset.index;
+    if (i + 1 < slides.length) { show(i + 1); return; }
+    const right = slides.filter(s => s.dataset.correct === '1').length;
+    slides.forEach(s => { s.hidden = true; });
+    dots.forEach(d => d.classList.remove('is-current'));
+    const done = slider.querySelector('.check-slider__done');
+    done.querySelector('.check-slider__score').textContent =
+      `You got ${right} of ${slides.length} right.` + (right === slides.length ? ' Nice work.' : ' Review the sections these came from and try again.');
+    slider.querySelector('.check-slider__count').textContent = 'Done';
+    done.hidden = false;
+  });
+
   return {
     hasQuestions,
-    renderQuiz
+    hasEndQuestions,
+    renderQuiz,
+    renderCheckSlider
   };
 })();

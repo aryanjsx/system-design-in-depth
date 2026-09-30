@@ -43,7 +43,7 @@ The useful distinction survives the implementation: listing direct followers is 
 
 ## Keep the two representations consistent
 
-Our [social example](/course-assets/system-design/m22-social.py), with its [shared helpers](/course-assets/system-design/m22-common.py), deliberately stores two tables in one SQLite database. One transaction writes the forward row, reverse row and operation receipt. An exception between the row writes rolls everything back. This exposes the maintenance obligation without pretending to implement distributed FlockDB.
+Our social example, with its shared helpers, deliberately stores two tables in one SQLite database. One transaction writes the forward row, reverse row and operation receipt. An exception between the row writes rolls everything back. This exposes the maintenance obligation without pretending to implement distributed FlockDB.
 
 The six-account graph starts with Ada and Dee following Bo and Cy, plus Eli and Fay following Cy. The replay interrupts Eli's new follow of Bo, retries it, and then unfollows. A delayed retry of the old follow returns its historical receipt without restoring the edge.
 

@@ -42,7 +42,7 @@ sequenceDiagram
     Note over A: Epoch 1 can no longer write
 \`\`\`
 
-In the [object-storage example](/course-assets/system-design/m13-object-store.py), the append and cutover use the same Python lock. A request cannot pass its authority check, wait through cutover, and then append with stale permission. The check and effect occur inside one guarded section.
+In the object-storage example, the append and cutover use the same Python lock. A request cannot pass its authority check, wait through cutover, and then append with stale permission. The check and effect occur inside one guarded section.
 
 \`\`\`bash title="terminal"
 python3 m13-object-store.py transfer

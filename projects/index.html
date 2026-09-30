@@ -7,19 +7,19 @@
   <title>System Design In Depth</title>
   <meta name="description" content="Deep system design curriculum — 18 modules, 200 units, 118 architecture diagrams, from-scratch algorithm builds, and curated video walkthroughs for senior engineers.">
   <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#111315">
+  <meta name="theme-color" content="#000000">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/content.css">
+  <link rel="stylesheet" href="css/variables.css?v=544d272d9a">
+  <link rel="stylesheet" href="css/layout.css?v=d51fb5dfe4">
+  <link rel="stylesheet" href="css/components.css?v=ef8b78bc61">
+  <link rel="stylesheet" href="css/content.css?v=757b22ae99">
 
   <!-- Google Analytics 4 (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SZ26BQZCQ7" id="ga4-gtag-script"></script>
@@ -40,7 +40,7 @@
         const stored = localStorage.getItem('sd-theme');
         const dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111315' : '#fbfbfb');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#000000' : '#ffffff');
       } catch {}
     })();
   </script>
@@ -161,18 +161,18 @@
   </div>
 
   <!-- Data Scripts -->
-  <script src="data/curriculum.js"></script>
-  <script src="data/implementations_code.js"></script>
-  <script src="data/projects.js"></script>
+  <script src="data/curriculum.js?v=ed52a91626"></script>
+  <script src="data/implementations_code.js?v=4eb40c96bd"></script>
+  <script src="data/projects.js?v=8783850429"></script>
 
   <!-- App Scripts -->
-  <script src="js/analytics.js"></script>
-  <script src="js/progress.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/exercises.js"></script>
-  <script src="js/simulators.js"></script>
-  <script src="js/renderer.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/analytics.js?v=8e2304fc12"></script>
+  <script src="js/progress.js?v=8d04470dea"></script>
+  <script src="js/search.js?v=2ebf07c1f2"></script>
+  <script src="js/exercises.js?v=ad524429c3"></script>
+  <script src="js/simulators.js?v=d091a36e30"></script>
+  <script src="js/renderer.js?v=1b4e3fc968"></script>
+  <script src="js/app.js?v=42eb644f75"></script>
 
   <!-- Mermaid (lazy-loaded) -->
   <script>
@@ -188,17 +188,31 @@
           mermaid.initialize({
             startOnLoad: false,
             securityLevel: 'loose',
-            theme: isDark ? 'dark' : 'default',
+            theme: 'base', // base honours themeVariables; 'default'/'dark' override them
             themeVariables: {
               darkMode: isDark,
-              background: isDark ? '#141517' : '#ffffff',
-              primaryColor: isDark ? '#191a1c' : '#f8f9fa',
-              primaryTextColor: isDark ? '#f2f4f7' : '#1f2937',
-              primaryBorderColor: isDark ? '#36373b' : '#e5e7eb',
-              lineColor: isDark ? '#747d89' : '#9ca3af',
-              secondaryColor: isDark ? '#151617' : '#f3f4f6',
-              tertiaryColor: isDark ? '#202123' : '#e5e7eb',
-              fontFamily: '"Inter", -apple-system, sans-serif',
+              background: isDark ? '#0a0a0a' : '#ffffff',
+              primaryColor: isDark ? '#171717' : '#fafafa',
+              primaryTextColor: isDark ? '#ffffff' : '#0a0a0a',
+              primaryBorderColor: isDark ? '#404040' : '#d4d4d4',
+              lineColor: isDark ? '#737373' : '#a1a1a1',
+              secondaryColor: isDark ? '#0a0a0a' : '#f5f5f5',
+              tertiaryColor: isDark ? '#262626' : '#e5e5e5',
+          mainBkg: isDark ? '#171717' : '#fafafa',
+          nodeBorder: isDark ? '#404040' : '#d4d4d4',
+          clusterBkg: isDark ? '#0a0a0a' : '#ffffff',
+          clusterBorder: isDark ? '#262626' : '#e5e5e5',
+          textColor: isDark ? '#e5e5e5' : '#262626',
+          edgeLabelBackground: isDark ? '#0a0a0a' : '#ffffff',
+          actorBkg: isDark ? '#171717' : '#fafafa',
+          actorBorder: isDark ? '#404040' : '#d4d4d4',
+          actorTextColor: isDark ? '#ffffff' : '#0a0a0a',
+          signalColor: isDark ? '#a1a1a1' : '#525252',
+          signalTextColor: isDark ? '#e5e5e5' : '#262626',
+          noteBkgColor: isDark ? '#262626' : '#f5f5f5',
+          noteBorderColor: isDark ? '#404040' : '#d4d4d4',
+          noteTextColor: isDark ? '#e5e5e5' : '#262626',
+              fontFamily: '"Geist", -apple-system, sans-serif',
               fontSize: '13px'
             }
           });

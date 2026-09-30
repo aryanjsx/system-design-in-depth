@@ -30,7 +30,7 @@ sequenceDiagram
 
 B's reply depends on A's request, so the request came first in this exchange. Its smaller clock reading cannot reverse that dependency. Lamport's happened-before relation formalizes this using process order and actual message exchanges, without requiring matching wall clocks.
 
-The [Snowflake replay](/course-assets/system-design/m09-snowflake-replay.mjs) calls two generators in this order and retains explicit \`causedBy\` references. Its ordering mode also compares equal timestamps and two elapsed-time calculations. Node 24.11.0 reproduced the output on September 17.
+The Snowflake replay calls two generators in this order and retains explicit \`causedBy\` references. Its ordering mode also compares equal timestamps and two elapsed-time calculations. Node 24.11.0 reproduced the output on September 17.
 
 \`\`\`bash title="terminal"
 node m09-snowflake-replay.mjs ordering

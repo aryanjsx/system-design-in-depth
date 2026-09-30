@@ -35,7 +35,7 @@ A queue can move report calculation out of a redirect's wait. It still needs dur
 
 The first shortener design can record an event in the existing database and calculate reports later. A separate queue becomes worth considering when the shared database path or processing arrangement no longer meets the requirement. Measure the combined path; the lookup-only benchmark did not test it.
 
-![One engineer proposes adding a cache box. A colleague holding a pager asks who will get paged when it fails.](/course-assets/system-design/illustrations/infrastructure-owner.webp)
+
 
 ## Decide who can operate it
 

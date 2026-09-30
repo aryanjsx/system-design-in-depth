@@ -25,7 +25,7 @@ Production selectors may combine throughput estimates, buffer levels, device lim
 
 ## A three-request experiment
 
-The [lab](/course-assets/system-design/m24-lab.py) and [media helper](/course-assets/system-design/m24-media.py) generate the same HLS files as the preceding lesson. Use its pinned Python environment and FFmpeg 8.1.2. File sizes are measured; download times and stalls are calculated under a chosen capacity schedule, with no real congested network.
+The lab and media helper generate the same HLS files as the preceding lesson. Use its pinned Python environment and FFmpeg 8.1.2. File sizes are measured; download times and stalls are calculated under a chosen capacity schedule, with no real congested network.
 
 Both policies start with one second buffered. Fixed-high always requests the larger rendition. Adaptive requests high if its previous observed capacity is at least 200,000 bits/s, otherwise low. Its initial observation is 400,000 bits/s; neither policy can see the next capacity before choosing.
 

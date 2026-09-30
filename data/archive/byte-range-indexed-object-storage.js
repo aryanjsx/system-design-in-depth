@@ -27,7 +27,7 @@ A program slice excludes its right endpoint. HTTP byte ranges include it, so pea
 
 ## Exercise the boundary
 
-The [object-storage download](/course-assets/system-design/m13-object-store.py) writes this 17-byte pack in a private temporary directory. It compares a full read with a seek to pear's offset, then tries invalid metadata and an actually shortened source file.
+The object-storage download writes this 17-byte pack in a private temporary directory. It compares a full read with a seek to pear's offset, then tries invalid metadata and an actually shortened source file.
 
 \`\`\`bash title="terminal"
 python3 m13-object-store.py ranges

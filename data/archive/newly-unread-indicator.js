@@ -110,7 +110,7 @@ A live notification can tell an online client to refetch. A disconnected client 
 
 ## Run the arrival race
 
-Save the standard-library [inbox service](/course-assets/system-design/m22-inbox.py) and [shared helpers](/course-assets/system-design/m22-common.py) together. They use a private temporary SQLite file and an actual loopback HTTP server with fake account-bound credentials.
+Save the standard-library inbox service and shared helpers together. They use a private temporary SQLite file and an actual loopback HTTP server with fake account-bound credentials.
 
 Bo sends twice and Cy once. Device A fetches through 3, then two threads race Dee's fourth message against acknowledgement of that snapshot. A later device acknowledges through 4 before the first device submits its older snapshot again.
 
@@ -159,7 +159,7 @@ ZCOUNT newly_unread:Ada (3 +inf
 
 \`ZCARD\` is sufficient only if every retained member is newly unread. Once old entries remain, use the acknowledgement boundary. Deleting scores through A can reclaim space, but a late event can reinsert an old sender; counting above A still excludes that activity.
 
-The [Redis control](/course-assets/system-design/m22-redis-badge.py) starts a private process with TCP disabled and demonstrates the unsafe alternatives:
+The Redis control starts a private process with TCP disabled and demonstrates the unsafe alternatives:
 
 \`\`\`bash title="terminal"
 python3 m22-redis-badge.py

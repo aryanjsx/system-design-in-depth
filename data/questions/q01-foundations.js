@@ -2,664 +2,858 @@ window.QUESTION_BANK = window.QUESTION_BANK || {};
 
 window.QUESTION_BANK["requirements-clarification"] = [
   {
-    id: "requirements-clarification-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Requirements Clarification?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "requirements-clarification-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Spotting an invariant",
+    "section": "Requirements clarification",
+    "prompt": "While writing the URL shortener brief, which of these statements is an invariant rather than a scale assumption, a latency target, or a non-goal?",
+    "options": [
+      "The system should plan for 100 million redirects per day",
+      "Custom aliases are deferred until after the first version",
+      "A generated short name must never silently replace an existing mapping",
+      "At least 95% of redirects should finish within one second"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["requirements-clarification", "basics"]
+    "answer": 2,
+    "explanation": "An invariant is a condition the implementation must preserve even when requests overlap or are retried, and a mapping that is never overwritten is exactly that. The 95% latency line is tempting, but it is a measurable quality target (a non-functional requirement), not a correctness condition that must hold on every request.",
+    "tags": [
+      "requirements-clarification",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "requirements-clarification-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Requirements Clarification, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "requirements-clarification-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Which failure blocks redirects",
+    "section": "Requirements clarification",
+    "prompt": "Under the course's chosen contract, first the analytics report service goes down while event storage keeps working. Later, event storage fails while reporting is fine. How should redirects behave in each case?",
+    "options": [
+      "Keep redirecting in both cases, since reports and event storage are both background work",
+      "Keep redirecting in the first case and return an error in the second, since each redirect needs a stored event",
+      "Return an error in the first case and keep redirecting in the second, since reports are user-facing",
+      "Return an error in both cases, since click tracking is part of every redirect's contract"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["requirements-clarification", "troubleshooting"]
+    "answer": 1,
+    "explanation": "The brief says every accepted redirect must have a stored event before the response, while reports can be calculated later. So losing reporting does not block redirects, but losing event storage does. Treating both as background work is the tempting mistake: moving report calculation to the background says nothing about whether losing its input is acceptable.",
+    "tags": [
+      "requirements-clarification",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "requirements-clarification-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Requirements Clarification at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "requirements-clarification-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Freshness hidden in a cache",
+    "section": "Requirements clarification",
+    "prompt": "A design doc says only \"we will cache link lookups\". Destinations never change after creation, but an administrator can disable a phishing link. Which requirement has the brief failed to pin down?",
+    "options": [
+      "Which eviction policy the cache uses, such as LRU or LFU",
+      "The read/write ratio needed to size the cache cluster",
+      "Whether destinations can be edited after the link is created",
+      "How long a cached copy may keep redirecting after a link is disabled"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["requirements-clarification", "architecture"]
+    "answer": 3,
+    "explanation": "The lesson says freshness needs its own question: a one-minute allowed delay permits different designs than a requirement to stop every new redirect immediately. Fixed destinations are the tempting answer, but they do not settle anything here, because the disabled flag can still change while a cached copy is being served.",
+    "tags": [
+      "requirements-clarification",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["logical-system-design"] = [
   {
-    id: "logical-system-design-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Logical System Design?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "logical-system-design-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Where sequencing belongs",
+    "section": "Logical system design",
+    "prompt": "Of the three responsibilities (HTTP adapter, link operation, storage adapter), which decision belongs to the link operation?",
+    "options": [
+      "Requiring a redirect to wait until its click event is stored",
+      "Turning a Found result into a redirect response with a Location header",
+      "Mapping a database row into the application's link result type",
+      "Parsing the short code out of the incoming request path"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["logical-system-design", "basics"]
+    "answer": 0,
+    "explanation": "The lesson puts the sequencing rule (a successful redirect waits for its event to be stored) in the link operation, because HTTP formatting should not decide whether losing a click is acceptable. Building the redirect response looks like a decision, but it is translation work for the HTTP adapter.",
+    "tags": [
+      "logical-system-design",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "logical-system-design-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Logical System Design, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "logical-system-design-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Timeout is not missing",
+    "section": "Logical system design",
+    "prompt": "During resolve(code), the storage adapter's database connection times out. What should the operation return to the HTTP caller?",
+    "options": [
+      "Missing, so the handler returns a 404 and the reader is not left waiting",
+      "Disabled, so the reader is safely refused without seeing an internal error",
+      "Unavailable, so the handler returns a service error instead of a false answer",
+      "The driver's raw exception, so the handler can choose the right status code"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["logical-system-design", "troubleshooting"]
+    "answer": 2,
+    "explanation": "A timeout means the operation could not reach an answer, which the contract calls Unavailable. Returning Missing is the tempting shortcut, but it tells the caller that no such link exists when that is unknown. Passing the raw driver exception up would spread vendor details into every route and job.",
+    "tags": [
+      "logical-system-design",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "logical-system-design-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Logical System Design at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "logical-system-design-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "What a fake cannot prove",
+    "section": "Logical system design",
+    "prompt": "You test the rule \"disabled links never redirect\" by calling the link operation with an in-memory storage fake that returns a disabled record. The test passes. What has it not established?",
+    "options": [
+      "That the link operation applies the disabled-link rule correctly",
+      "That the rule can be checked without a browser or a live database",
+      "That the operation's result types cover the disabled case",
+      "That the real query handles missing rows, uniqueness conflicts and failures"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["logical-system-design", "architecture"]
+    "answer": 3,
+    "explanation": "The fake checks the product rule in isolation. The lesson says the storage adapter still needs its own tests against the real database, covering missing rows, conflicts and failures. The first option is what the test does prove, and keeping the two kinds of test separate shows whether a failure comes from the rule or from persistence.",
+    "tags": [
+      "logical-system-design",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["non-functional-requirements"] = [
   {
-    id: "non-functional-requirements-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Non Functional Requirements?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "non-functional-requirements-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "RPO versus RTO",
+    "section": "Non-functional requirements",
+    "prompt": "For a named disaster scenario, what does the recovery point objective (RPO) limit?",
+    "options": [
+      "How long restoring service may take after the failure",
+      "How much recent data may be missing after recovery, measured in time",
+      "What fraction of eligible requests must succeed each month",
+      "How quickly committed writes must become visible to readers"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["non-functional-requirements", "basics"]
+    "answer": 1,
+    "explanation": "RPO limits the acceptable gap in recovered data, for example losing no more than five minutes of writes. The first option describes RTO, the recovery time objective, which limits how long restoration may take. They are separate targets, and a plan can meet one while missing the other.",
+    "tags": [
+      "non-functional-requirements",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "non-functional-requirements-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Non Functional Requirements, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "non-functional-requirements-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Downtime budget for 99.9%",
+    "section": "Non-functional requirements",
+    "prompt": "In the simplified time-based model (the service is either fully up or fully down), how much total downtime does a 99.9% availability target allow over a 30-day month?",
+    "options": [
+      "About 4.3 minutes",
+      "About 8.8 hours",
+      "About 43 minutes",
+      "About 7.2 hours"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["non-functional-requirements", "troubleshooting"]
+    "answer": 2,
+    "explanation": "30 days is 43,200 minutes, and 0.1% of that is about 43.2 minutes. 8.8 hours is the tempting choice because it is the familiar yearly budget for 99.9%, not the monthly one. A request-based target would count failed requests instead and could give a different result.",
+    "tags": [
+      "non-functional-requirements",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "non-functional-requirements-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Non Functional Requirements at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "non-functional-requirements-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Fast failures flatter p95",
+    "section": "Non-functional requirements",
+    "prompt": "A dashboard computes p95 redirect latency over every response, errors included. After a bad deploy, 30% of redirects fail with an error returned in 3 ms. What is the dashboard likely to show, and how should the SLO handle it?",
+    "options": [
+      "p95 holds steady or improves, so failed eligible requests must count as misses however fast they return",
+      "p95 rises sharply, which correctly flags the incident without changing how the target is measured",
+      "p95 stays unchanged, because percentiles ignore the fastest part of the distribution",
+      "p95 holds steady or improves, so errors should be removed from the latency measurement entirely"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["non-functional-requirements", "architecture"]
+    "answer": 0,
+    "explanation": "A flood of fast errors pulls the distribution down, so a broken service can look faster. The lesson counts only correct answers within the deadline as successes, so failed attempts are misses. Simply dropping errors from the measurement (the last option) is tempting, but it hides the failures instead of counting them against the target.",
+    "tags": [
+      "non-functional-requirements",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["system-design-tradeoffs"] = [
   {
-    id: "system-design-tradeoffs-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of System Design Tradeoffs?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "system-design-tradeoffs-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "A complete trade-off statement",
+    "section": "System design tradeoffs",
+    "prompt": "Which statement is a complete trade-off: it names the benefit, the cost, and the requirement that makes the cost acceptable?",
+    "options": [
+      "Cache seller data with a short expiry so that product pages load faster for buyers",
+      "Cache display names under the agreed delay; check payment eligibility fresh at order time",
+      "Cache every seller field with the same expiry so that the data stays uniformly fresh",
+      "Avoid caching seller data at all, because a cache adds complexity to the architecture"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["system-design-tradeoffs", "basics"]
+    "answer": 1,
+    "explanation": "The second option names what may be stale (display names), the accepted delay, and the operation that needs a stronger check (payment eligibility). The first option sounds reasonable but never says which staleness is acceptable. The last option gives only \"complexity\" as the cost, which the lesson says to turn into a concrete retry, migration, or stale result.",
+    "tags": [
+      "system-design-tradeoffs",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "system-design-tradeoffs-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving System Design Tradeoffs, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "system-design-tradeoffs-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "A queue is not capacity",
+    "section": "System design tradeoffs",
+    "prompt": "Workers can process 800 jobs per second. A burst arrives at 1,000 jobs per second for 10 minutes, and you put a queue in front of the workers. What does the queue do during the burst?",
+    "options": [
+      "It absorbs the burst, but about 120,000 jobs pile up and user-visible delay grows until the burst ends",
+      "It lifts throughput to 1,000 jobs per second by decoupling producers from the workers",
+      "It drops the extra 200 jobs per second so accepted jobs keep a constant latency",
+      "It builds a backlog of about 12,000 jobs that drains within a second of the burst ending"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["system-design-tradeoffs", "troubleshooting"]
+    "answer": 0,
+    "explanation": "The lesson says a queue does not create processing capacity. The 200 extra jobs per second for 600 seconds add up to a backlog of about 120,000, and that shows up as waiting time. Decoupling is the tempting answer, but it only moves the delay onto users; the workers still finish 800 jobs per second.",
+    "tags": [
+      "system-design-tradeoffs",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "system-design-tradeoffs-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for System Design Tradeoffs at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "system-design-tradeoffs-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Per-user metric labels",
+    "section": "System design tradeoffs",
+    "prompt": "To debug one customer, an engineer adds user_id as a label on the request-latency metric. The product has 5 million active users. Where does the cost show up first?",
+    "options": [
+      "Request latency rises, because every request has to write one more label value",
+      "Very little changes, because each extra label adds only a few bytes per data point",
+      "The metrics agent quietly drops the label once cardinality is high, losing the debug data",
+      "The number of time series grows with the user population, inflating metric storage and query cost"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["system-design-tradeoffs", "architecture"]
+    "answer": 3,
+    "explanation": "Each distinct label value creates its own time series, so a user ID label makes a small set of measurements grow with the user base. The lesson's point is that the cost follows the behavior, not the number of boxes in the diagram. \"Only a few bytes\" is the tempting answer, but it ignores that the cost multiplies per series rather than adding per point.",
+    "tags": [
+      "system-design-tradeoffs",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["availability-durability-consistency-cost"] = [
   {
-    id: "availability-durability-consistency-cost-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Availability Durability Consistency Cost?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "availability-durability-consistency-cost-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Stopped database, intact files",
+    "section": "Availability, durability, consistency, cost",
+    "prompt": "The shortener's database process is stopped, but its data files are intact and nothing has been lost. Which property of the redirect path has failed?",
+    "options": [
+      "Durability, because acknowledged mappings cannot be read back",
+      "Consistency, because readers see results that differ from the writes",
+      "Availability, because the operation cannot be used right now",
+      "Durability and consistency together, because nothing can be verified"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["availability-durability-consistency-cost", "basics"]
+    "answer": 2,
+    "explanation": "The mappings still exist, so durability holds, but the redirect operation cannot be used, which is an availability failure. Durability is the tempting choice, but it asks whether acknowledged data survives, not whether it can be reached at this moment. The lesson stresses that up-but-lossy and safe-but-unreachable are different situations.",
+    "tags": [
+      "availability-durability-consistency-cost",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "availability-durability-consistency-cost-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Availability Durability Consistency Cost, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "availability-durability-consistency-cost-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "The first read after create",
+    "section": "Availability, durability, consistency, cost",
+    "prompt": "A creator gets a success response and immediately opens the short link. The read goes to a replica 200 ms behind the primary and returns \"unknown code\". What is the straightforward first fix?",
+    "options": [
+      "Make destinations immutable so the replica can never return a stale answer",
+      "Send the creator's first read to the database that accepted the write",
+      "Have the replica fsync before answering, so it holds durable data",
+      "Return the 404 anyway, since the mapping is durable on the primary"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["availability-durability-consistency-cost", "troubleshooting"]
+    "answer": 1,
+    "explanation": "The lesson's initial choice is to read from the database that accepted the creation, so a read that starts after a successful create can find the mapping. Immutability is the tempting answer, but the lesson notes it does not solve the first-read problem, because the row is missing on the replica rather than stale.",
+    "tags": [
+      "availability-durability-consistency-cost",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "availability-durability-consistency-cost-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Availability Durability Consistency Cost at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "availability-durability-consistency-cost-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Replicas copy mistakes",
+    "section": "Availability, durability, consistency, cost",
+    "prompt": "An operator accidentally runs DELETE on the links table. The team has a synchronous replica in another zone but has never set up backups. What happens?",
+    "options": [
+      "The replica keeps the rows, because synchronous replication only ships inserts and updates",
+      "Failing over to the replica recovers every row with zero data loss",
+      "The rows can be recovered as long as the primary has not yet checkpointed its log",
+      "The replica applies the same delete, so recovery needs a backup or restore that does not exist"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["availability-durability-consistency-cost", "architecture"]
+    "answer": 3,
+    "explanation": "A replica faithfully copies an accidental deletion. Protecting against operator error needs a backup and a tested restore, which cover a different failure than replicas do. Failing over is the tempting idea, but the standby already holds the same empty table.",
+    "tags": [
+      "availability-durability-consistency-cost",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["back-of-the-envelope-capacity-planning"] = [
   {
-    id: "back-of-the-envelope-capacity-planning-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Back Of The Envelope Capacity Planning?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "back-of-the-envelope-capacity-planning-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Daily volume to rate",
+    "section": "Back-of-the-envelope capacity planning",
+    "prompt": "Using the anchor that a day is about 86,400 seconds, roughly what average rate is 1 billion events per day?",
+    "options": [
+      "About 1,200 per second",
+      "About 120,000 per second",
+      "About 86,400 per second",
+      "About 12,000 per second"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["back-of-the-envelope-capacity-planning", "basics"]
+    "answer": 3,
+    "explanation": "1 billion divided by 86,400 seconds is about 11,600, which rounds to roughly 12,000 per second (the same way 1 million per day is about 12 per second). That is only the average; the design still has to cover an assumed peak multiple, such as ten times higher.",
+    "tags": [
+      "back-of-the-envelope-capacity-planning",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "back-of-the-envelope-capacity-planning-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Back Of The Envelope Capacity Planning, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "back-of-the-envelope-capacity-planning-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Storage from retention",
+    "section": "Back-of-the-envelope capacity planning",
+    "prompt": "A service stores 2 million new records per day and keeps them for three 365-day years. Each record takes about 250 bytes including indexes. How much space does one copy of this data need?",
+    "options": [
+      "About 0.18 TB",
+      "About 0.55 TB",
+      "About 1.8 TB",
+      "About 5.5 TB"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["back-of-the-envelope-capacity-planning", "troubleshooting"]
+    "answer": 1,
+    "explanation": "2 million times 1,095 days is 2.19 billion records, and at 250 bytes that is about 547 GB, or roughly 0.55 decimal TB. The lesson adds replicas, backups and write logs separately, and warns not to count indexes twice when the measured record size already includes them.",
+    "tags": [
+      "back-of-the-envelope-capacity-planning",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "back-of-the-envelope-capacity-planning-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Back Of The Envelope Capacity Planning at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "back-of-the-envelope-capacity-planning-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "What a benchmark proves",
+    "section": "Back-of-the-envelope capacity planning",
+    "prompt": "The historical local test completed about 11,574 warm indexed lookups per second for 20 seconds, with none failing or taking longer than one second. What is the strongest claim this result supports?",
+    "options": [
+      "The complete service can sustain 11,574 redirects per second for its five-year life",
+      "The simple indexed database design is worth testing further, including the app and event insert",
+      "A cache is unnecessary, because no lookup exceeded the one-second latency limit",
+      "Peak capacity is about 115,740 per second once the tenfold peak factor is applied"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["back-of-the-envelope-capacity-planning", "architecture"]
+    "answer": 1,
+    "explanation": "The test used a local socket and left out both the application and the required event insert, so it only supports testing the simple design further. Claiming complete-service capacity is the tempting misreading, because that path, its writes, and growth over five years were never measured.",
+    "tags": [
+      "back-of-the-envelope-capacity-planning",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["concurrency-vs-parallelism"] = [
   {
-    id: "concurrency-vs-parallelism-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Concurrency Vs Parallelism?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "concurrency-vs-parallelism-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Async does not offload CPU",
+    "section": "How a server handles many requests",
+    "prompt": "A Node.js handler declared async spends 200 ms hashing a password in plain JavaScript on the event-loop thread. What happens to other requests during that time?",
+    "options": [
+      "Their callbacks are blocked for about 200 ms, since async does not move CPU work off the loop",
+      "They continue, because Node sends async functions to the libuv worker pool automatically",
+      "They continue, because the promise lets the hashing run in parallel on another core",
+      "Only requests to the same route are delayed, while other routes run as normal"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["concurrency-vs-parallelism", "basics"]
+    "answer": 0,
+    "explanation": "Declaring a function async does not move its computation to another processor, so a long CPU task on the loop thread stops other callbacks from running. The worker pool is the tempting answer, but it only runs certain platform operations; application CPU work needs worker threads, separate processes, or chunks that yield.",
+    "tags": [
+      "concurrency-vs-parallelism",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "concurrency-vs-parallelism-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Concurrency Vs Parallelism, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "concurrency-vs-parallelism-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "The single-core CPU floor",
+    "section": "How a server handles many requests",
+    "prompt": "Each request needs 5 ms of CPU, waits 40 ms on the database, then needs 1 ms more of CPU. Thirty-two requests arrive at once on one core. However well the waits overlap, what is the minimum time to finish them all?",
+    "options": [
+      "About 46 ms, since every request can wait at the same time",
+      "About 96 ms, the CPU time of the lesson's sixteen-request batch",
+      "About 192 ms, the total CPU work that one core must execute",
+      "About 1,472 ms, since each request takes 46 ms end to end"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["concurrency-vs-parallelism", "troubleshooting"]
+    "answer": 2,
+    "explanation": "Thirty-two requests times 6 ms of CPU is 192 ms, and overlapping waits cannot make one core run those instructions any sooner. The 46 ms answer is tempting because every wait can overlap, but the compute cannot, and 1,472 ms is what you get with no overlap at all.",
+    "tags": [
+      "concurrency-vs-parallelism",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "concurrency-vs-parallelism-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Concurrency Vs Parallelism at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "concurrency-vs-parallelism-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Connection caps add up",
+    "section": "How a server handles many requests",
+    "prompt": "You run 30 app instances, each with a database pool capped at 10, plus 20 background workers holding 2 connections each. The database allows 200 connections. What is the risk?",
+    "options": [
+      "None, because every process stays within its own configured cap",
+      "Up to 300 connections, fine if workers borrow from the app pools",
+      "Up to 40 connections, since pooled connections are shared across instances",
+      "Up to 340 connections, more than the database allows; per-process caps are not global"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["concurrency-vs-parallelism", "architecture"]
+    "answer": 3,
+    "explanation": "30 times 10 plus 20 times 2 is 340, well over the limit of 200. The lesson warns that a per-process cap is not a system-wide cap, so concurrency must be budgeted across every instance and background worker. The first option is the tempting mistake of checking each process on its own.",
+    "tags": [
+      "concurrency-vs-parallelism",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["horizontal-vs-vertical-scaling"] = [
   {
-    id: "horizontal-vs-vertical-scaling-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Horizontal Vs Vertical Scaling?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "horizontal-vs-vertical-scaling-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Prerequisite for scale-out",
+    "section": "Engineering Realities & Trade-Offs",
+    "prompt": "What must be true of an application tier before you can scale it out by adding nodes behind a load balancer?",
+    "options": [
+      "Each node must fit inside one NUMA node to avoid cross-socket memory penalties",
+      "The tier must be stateless, with sessions and in-flight jobs kept in a shared store",
+      "The database behind it must be sharded, so each node gets its own partition",
+      "The load balancer must run at layer 7, so it can read session cookies"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["horizontal-vs-vertical-scaling", "basics"]
+    "answer": 1,
+    "explanation": "Horizontal scaling assumes any node can serve any request, so sessions, in-flight jobs and persistent data must move to shared stores such as Redis or a database. NUMA fit is a right-sizing concern for each node, and sticky routing at layer 7 is a workaround that brings back the problem of state living on one node.",
+    "tags": [
+      "horizontal-vs-vertical-scaling",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "horizontal-vs-vertical-scaling-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Horizontal Vs Vertical Scaling, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "horizontal-vs-vertical-scaling-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Sizing with N+1",
+    "section": "Worked example: when to scale up and when to scale out",
+    "prompt": "Load tests show one instance sustains 500 requests per second within its latency target. Peak traffic is 3,600 requests per second, and you must survive losing one instance. How many instances do you run?",
+    "options": [
+      "7",
+      "8",
+      "10",
+      "9"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["horizontal-vs-vertical-scaling", "troubleshooting"]
+    "answer": 3,
+    "explanation": "3,600 divided by 500 is 7.2, which rounds up to 8 instances to carry the peak, plus 1 spare for N+1 makes 9. Eight is the tempting answer because it covers the peak, but losing one instance would then leave only 7 for traffic that needs 7.2.",
+    "tags": [
+      "horizontal-vs-vertical-scaling",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "horizontal-vs-vertical-scaling-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Horizontal Vs Vertical Scaling at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "horizontal-vs-vertical-scaling-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Autoscaler overwhelms the database",
+    "section": "Failure modes to watch",
+    "prompt": "During a spike, the autoscaler adds 25 instances of a stateless REST API (short-lived requests) in one step. Each instance opens a 20-connection pool at startup. What is most likely to fail first?",
+    "options": [
+      "The database, which suddenly has to accept up to 500 new connections",
+      "The load balancer, which cannot register 25 new targets at the same moment",
+      "The new instances, which stay idle because clients remain pinned to old nodes",
+      "The cloud quota, since providers cap scale-out at 10 instances per step"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["horizontal-vs-vertical-scaling", "architecture"]
+    "answer": 0,
+    "explanation": "This is the lesson's thundering scale-out failure: many new connection pools opening at once can overload the shared database. Idle new nodes is a real failure mode for long-lived WebSocket connections, but with short stateless requests the load balancer spreads new traffic onto them quickly.",
+    "tags": [
+      "horizontal-vs-vertical-scaling",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["monolith-vs-microservices"] = [
   {
-    id: "monolith-vs-microservices-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Monolith Vs Microservices?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "monolith-vs-microservices-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why services avoid 2PC",
+    "section": "Core Production Invariants",
+    "prompt": "Once services have separate databases, why is two-phase commit rarely used to make cross-service writes atomic?",
+    "options": [
+      "It only works when every participant shares a single database engine",
+      "It cannot coordinate more than two participants in one transaction",
+      "Participants can be left blocked when the coordinator fails mid-protocol",
+      "It provides only eventual consistency, which breaks ACID guarantees"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["monolith-vs-microservices", "basics"]
+    "answer": 2,
+    "explanation": "Two-phase commit is atomic, but participants that have voted to commit can sit holding locks until the coordinator comes back, which is why services usually use sagas instead. The \"two\" in its name refers to its two phases, not a limit of two participants. Eventual consistency describes sagas, not 2PC.",
+    "tags": [
+      "monolith-vs-microservices",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "monolith-vs-microservices-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Monolith Vs Microservices, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "monolith-vs-microservices-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Availability multiplies",
+    "section": "Worked example: the cost of one extra hop",
+    "prompt": "A checkout request calls four services one after another, and each is 99.9% available on its own. Ignoring the caller's own failures, what is the best availability the combined path can reach?",
+    "options": [
+      "About 99.9%, the same as its weakest service",
+      "About 99.6%, the product of four 99.9% values",
+      "About 96.1%, the product of four 99% values",
+      "About 99.0%, one nine lost per dependency added"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["monolith-vs-microservices", "troubleshooting"]
+    "answer": 1,
+    "explanation": "Serial dependencies multiply: 0.999 to the fourth power is about 0.996. Assuming the path is as available as its weakest link is the tempting error, because any one of the four failing breaks the request. 96.1% is what you get from four services each meeting their latency target 99% of the time.",
+    "tags": [
+      "monolith-vs-microservices",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "monolith-vs-microservices-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Monolith Vs Microservices at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "monolith-vs-microservices-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "When a split pays",
+    "section": "Signals that a split is justified",
+    "prompt": "Every new service adds its own pipelines, tracing, on-call and versioned APIs. Which situation most clearly justifies paying that cost?",
+    "options": [
+      "The codebase has grown past 500,000 lines and full builds now take twenty minutes",
+      "A new team wants its own framework for a feature that reads and writes the shared orders tables",
+      "Card data handling must sit inside its own PCI DSS compliance boundary, apart from the rest",
+      "Order and payment code call each other constantly and must commit in one transaction"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["monolith-vs-microservices", "architecture"]
+    "answer": 2,
+    "explanation": "A separate security or compliance boundary is one of the lesson's listed signals. A team that still writes the shared tables would create a distributed monolith, paying network costs without gaining independence. Code that calls itself constantly and shares transactions is a reason to keep it in one process.",
+    "tags": [
+      "monolith-vs-microservices",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["repository-pattern"] = [
   {
-    id: "repository-pattern-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Repository Pattern?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "repository-pattern-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Leaky generic repository",
+    "section": "Engineering Realities & Anti-Patterns",
+    "prompt": "Why does a generic repository that accepts arbitrary query predicates or query builders from service code defeat the purpose of the pattern?",
+    "options": [
+      "Generic repositories cannot be swapped for in-memory fakes in unit tests",
+      "Schema and query details leak into domain services, so storage changes spread to every caller",
+      "Predicates always compile to full table scans, which hurts query performance",
+      "It forces every aggregate to share one table, which breaks domain boundaries"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["repository-pattern", "basics"]
+    "answer": 1,
+    "explanation": "Once services pass database-specific filters in, knowledge of the schema spreads across domain code, and the abstraction no longer protects anything. The testability option is tempting, but the real problem is the leak itself; a leaky interface can still be faked, it just no longer hides the storage details.",
+    "tags": [
+      "repository-pattern",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "repository-pattern-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Repository Pattern, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "repository-pattern-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Atomic insert-if-absent",
+    "section": "Worked example: a link repository",
+    "prompt": "Two requests generate the same short code at the same moment. How should the Postgres adapter implement insertIfAbsent so that exactly one returns Inserted and the other returns CodeTaken?",
+    "options": [
+      "SELECT by code first, and INSERT only when no row comes back",
+      "Hold an in-process mutex around code generation and the insert",
+      "INSERT and treat any exception from the driver as CodeTaken",
+      "INSERT ... ON CONFLICT (code) DO NOTHING, then check rows affected"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["repository-pattern", "troubleshooting"]
+    "answer": 3,
+    "explanation": "Letting the unique constraint decide via ON CONFLICT keeps the check atomic inside the database, and the affected-row count tells you which result to return. Checking first and then inserting is the classic race, where both requests see no row. An in-process mutex does nothing across multiple app instances.",
+    "tags": [
+      "repository-pattern",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "repository-pattern-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Repository Pattern at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "repository-pattern-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Two repositories, one crash",
+    "section": "Failure modes",
+    "prompt": "Checkout saves an order through OrderRepository and decrements stock through InventoryRepository, and each commits its own transaction. The process crashes between the two commits. What state are you left in?",
+    "options": [
+      "The order is committed but stock was never reduced, because nothing grouped the writes",
+      "Both writes roll back, because the repositories share one connection pool",
+      "The stock is reduced but the order is missing, since inventory always commits first",
+      "Nothing is lost, because the ORM replays unfinished repository calls on restart"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["repository-pattern", "architecture"]
+    "answer": 0,
+    "explanation": "Two separate commits can leave one done and the other not. The lesson says writes across repositories need a shared transaction, the Unit of Work pattern. Sharing a connection pool is the tempting answer, but a pool shares connections, not transactions, so it provides no atomicity.",
+    "tags": [
+      "repository-pattern",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["extensible-data-modeling"] = [
   {
-    id: "extensible-data-modeling-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Extensible Data Modeling?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "extensible-data-modeling-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "The cost of EAV",
+    "section": "Core Production Strategies",
+    "prompt": "Why does the lesson treat Entity-Attribute-Value tables as a last resort compared with a JSONB column?",
+    "options": [
+      "EAV cannot store new attributes without an ALTER TABLE migration",
+      "Filtering on several attributes needs repeated self-joins, and per-attribute constraints are lost",
+      "EAV rows cannot be indexed, so every lookup scans the whole table",
+      "EAV makes every attribute NOT NULL, which forbids sparse data"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["extensible-data-modeling", "basics"]
+    "answer": 1,
+    "explanation": "EAV allows unlimited runtime attributes, but querying several attributes turns into a pile of self-joins, values are stored as text, and there are no native foreign keys or per-attribute constraints. The migration option is backwards: runtime flexibility without schema changes is exactly EAV's appeal.",
+    "tags": [
+      "extensible-data-modeling",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "extensible-data-modeling-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Extensible Data Modeling, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "extensible-data-modeling-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Backfill duration",
+    "section": "Worked example: renaming a column with expand/contract",
+    "prompt": "You backfill a new column on 1.2 billion rows in batches of 10,000 rows per transaction, throttled to 1,500 batches per minute to keep replica lag low. About how long does the backfill take?",
+    "options": [
+      "About 8 minutes",
+      "About 2 hours",
+      "About 13 hours",
+      "About 80 minutes"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["extensible-data-modeling", "troubleshooting"]
+    "answer": 3,
+    "explanation": "1,500 batches of 10,000 rows is 15 million rows per minute, and 1.2 billion divided by 15 million is 80 minutes. The lesson's own example (20 million rows per minute for 1.8 billion rows) takes about 90 minutes, and it throttles on purpose because backfills that run too fast cause replica lag and lock contention.",
+    "tags": [
+      "extensible-data-modeling",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "extensible-data-modeling-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Extensible Data Modeling at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "extensible-data-modeling-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "When to drop the old column",
+    "section": "Failure modes",
+    "prompt": "Reads have switched to destination_url and the backfill check shows zero rows where the two columns differ. When is it safe to drop the old url column?",
+    "options": [
+      "Right away, since the backfill is verified and both columns now match",
+      "As soon as the deploy that reads destination_url has reached every web node",
+      "Only after writes to url stop and no running version, batch job, or logged query still uses it",
+      "Right away, since dropping a nullable column is a fast metadata-only change in PostgreSQL"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["extensible-data-modeling", "architecture"]
+    "answer": 2,
+    "explanation": "Contract is the one step you cannot undo, so first stop writing url, then confirm from query logs that no deploy or batch job still reads it. Checking only the web nodes is tempting, but an old batch job reading url is exactly the failure the lesson warns about. How fast the drop runs does not make it safe.",
+    "tags": [
+      "extensible-data-modeling",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["cost-aware-architecture"] = [
   {
-    id: "cost-aware-architecture-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Cost Aware Architecture?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "cost-aware-architecture-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Poor fit for Spot",
+    "section": "Production Cost Optimization Mechanics",
+    "prompt": "Spot or preemptible capacity can be reclaimed at short notice. Which workload is the poorest fit for it?",
+    "options": [
+      "Asynchronous queue workers that retry jobs",
+      "A single stateful primary database",
+      "Nightly analytics batch pipelines",
+      "Stateless image-thumbnail processors"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["cost-aware-architecture", "basics"]
+    "answer": 1,
+    "explanation": "Spot suits interruptible, retryable work, while a single stateful primary loses availability, and possibly recent writes, whenever it is reclaimed. Queue workers can look risky, but a retried job simply runs again on another instance, which is why the lesson lists them as good Spot candidates.",
+    "tags": [
+      "cost-aware-architecture",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "cost-aware-architecture-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Cost Aware Architecture, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "cost-aware-architecture-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Pricing redirect egress",
+    "section": "Worked example: pricing the shortener's traffic",
+    "prompt": "Traffic grows to 200 million redirects per day with about 1 kB per response including headers. At an illustrative 0.09 USD per GB of internet egress, roughly what is the monthly egress bill?",
+    "options": [
+      "About 54 USD",
+      "About 5,400 USD",
+      "About 540 USD",
+      "About 18 USD"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["cost-aware-architecture", "troubleshooting"]
+    "answer": 2,
+    "explanation": "200 million times 1 kB is 200 GB per day, about 6 TB in a 30-day month, and 6,000 GB times 0.09 USD is about 540 USD. The lesson's point still stands: for this product, the cost of retaining events dominates, while egress would dominate for a media product.",
+    "tags": [
+      "cost-aware-architecture",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "cost-aware-architecture-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Cost Aware Architecture at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "cost-aware-architecture-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Cold tier, hot reads",
+    "section": "Failure modes",
+    "prompt": "To cut storage cost, a team moves product thumbnails that are viewed thousands of times a day from S3 Standard to Standard-Infrequent Access. What is the likely result?",
+    "options": [
+      "Every view waits hours, because Infrequent Access objects must be restored first",
+      "Thumbnails are deleted after 30 days because of the minimum storage duration",
+      "Savings as planned, because reads cost the same in every storage class",
+      "Retrieval fees per GB outweigh the storage savings, raising the total bill"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["cost-aware-architecture", "architecture"]
+    "answer": 3,
+    "explanation": "Infrequent-access tiers charge per GB retrieved, so frequently read data can cost more there than in Standard. Hours-long restores apply to Glacier archive tiers, not Standard-IA. The 30-day minimum means you are billed for at least 30 days, not that objects are deleted.",
+    "tags": [
+      "cost-aware-architecture",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["when-not-to-add-infrastructure"] = [
   {
-    id: "when-not-to-add-infrastructure-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of When Not To Add Infrastructure?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "when-not-to-add-infrastructure-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "A valid reason for a cache",
+    "section": "When not to add infrastructure",
+    "prompt": "Which of these is a sound starting point for considering a cache in front of link lookups?",
+    "options": [
+      "Repeated destination lookups dominate a measured latency problem that query fixes did not solve",
+      "The links table is projected to reach several hundred gigabytes within five years",
+      "Most well-known URL shorteners run Redis in front of their primary database",
+      "A cache would let the team avoid adding and maintaining database indexes"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["when-not-to-add-infrastructure", "basics"]
+    "answer": 0,
+    "explanation": "The lesson asks you to name the property the current design is missing, with evidence and a result to compare against afterward. \"The database will get large\" is the tempting reason, but table size alone does not show that a read path misses its target.",
+    "tags": [
+      "when-not-to-add-infrastructure",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "when-not-to-add-infrastructure-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving When Not To Add Infrastructure, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "when-not-to-add-infrastructure-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Moving reports off the path",
+    "section": "When not to add infrastructure",
+    "prompt": "Each redirect's event must survive a crash, and a teammate proposes a streaming platform so report calculation stays out of the redirect path. What should you try first?",
+    "options": [
+      "Put events on an in-memory queue and return without waiting for the enqueue to finish",
+      "Adopt the streaming platform, since only it can make event acceptance durable",
+      "Write each event to the existing database and calculate reports later in the background",
+      "Drop the event write from redirects and rebuild counts from load balancer logs"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["when-not-to-add-infrastructure", "troubleshooting"]
+    "answer": 2,
+    "explanation": "The first design can store the event in the existing database and compute reports later; a separate queue becomes worth it only when that path stops meeting the requirement. The in-memory queue is tempting because it is fast, but returning success before the event is durably accepted breaks the crash-survival promise.",
+    "tags": [
+      "when-not-to-add-infrastructure",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "when-not-to-add-infrastructure-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for When Not To Add Infrastructure at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "when-not-to-add-infrastructure-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "The cache's new failure paths",
+    "section": "When not to add infrastructure",
+    "prompt": "You approve a cache for link lookups. Which pair of failure paths does the lesson say you must trace before relying on it?",
+    "options": [
+      "Whether the cache's eviction policy matches the hot-key distribution and its memory limit",
+      "Whether cache nodes can be added without rehashing and whether keys can be compressed",
+      "How fast a disabled link stops being served, and whether the database copes when the cache is cold",
+      "Whether the cache supports transactions and whether it can persist snapshots to disk"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["when-not-to-add-infrastructure", "architecture"]
+    "answer": 2,
+    "explanation": "A cache adds a second place that can serve an old answer, which matters when an unsafe link is disabled, and removing it puts full load back on the database. Eviction tuning matters for efficiency, but it is not the new correctness and availability risk the cache introduces.",
+    "tags": [
+      "when-not-to-add-infrastructure",
+      "staff",
+      "inline"
+    ]
   }
 ];
-

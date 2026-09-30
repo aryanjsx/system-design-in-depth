@@ -11,7 +11,7 @@ We'll work through three parts:
 - How reserving several IDs per database call works, with a small SQLite exercise.
 - What happens to unused IDs after a crash, and how that affects range size.
 
-![A shared allocator supplies ID 42 to one application and ID 43 to another. The applications store the photos separately.](/course-assets/system-design/research-pilot/style-comparison/ticket-editorial.webp)
+
 
 ## Why a separate ID allocator?
 
@@ -98,7 +98,7 @@ Gaps are expected. The counter records reservations, so it can advance even when
 
 ID order also doesn't give creation order. A worker holding ID 1 can pause while another worker stores a photo with ID 4, even when both obtained their ranges from the same allocator.
 
-![Photo 4 is saved first while the worker with ID 1 pauses. Photo 1 is saved later, so numeric ID order does not establish creation order.](/course-assets/system-design/research-pilot/style-comparison/ticket-sketch.webp)
+
 
 A lost allocator reply has a similar result: the caller can request another range and abandon the uncertain one. It uses more numbers but avoids reissuing them.
 
@@ -114,5 +114,5 @@ If one database already generates all your IDs, a ticket service adds another de
 
 Monitor allocation failures and remaining integer space. Sequential IDs also require normal authorization checks: guessing another record's number must not grant access to it.
 
-For a larger exercise, the [Python allocation replay](/course-assets/system-design/m09-ticket-allocator.py) extends the SQLite example with two worker processes and a deliberately lost reply.
+For a larger exercise, the Python allocation replay extends the SQLite example with two worker processes and a deliberately lost reply.
 `;

@@ -573,23 +573,37 @@ window.App = (() => {
 
     // Update theme-color meta
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', next === 'dark' ? '#111315' : '#fbfbfb');
+    if (meta) meta.setAttribute('content', next === 'dark' ? '#000000' : '#ffffff');
 
     // Re-init mermaid with correct theme
     if (window.mermaid) {
       window.mermaid.initialize({
         startOnLoad: false,
-        theme: next === 'dark' ? 'dark' : 'default',
+        theme: 'base', // base honours themeVariables; 'default'/'dark' override them
         themeVariables: {
           darkMode: next === 'dark',
-          background: next === 'dark' ? '#141517' : '#ffffff',
-          primaryColor: next === 'dark' ? '#191a1c' : '#f8f9fa',
-          primaryTextColor: next === 'dark' ? '#f2f4f7' : '#1f2937',
-          primaryBorderColor: next === 'dark' ? '#36373b' : '#e5e7eb',
-          lineColor: next === 'dark' ? '#747d89' : '#9ca3af',
-          secondaryColor: next === 'dark' ? '#151617' : '#f3f4f6',
-          tertiaryColor: next === 'dark' ? '#202123' : '#e5e7eb',
-          fontFamily: '"Inter", -apple-system, sans-serif',
+          background: next === 'dark' ? '#0a0a0a' : '#ffffff',
+          primaryColor: next === 'dark' ? '#171717' : '#fafafa',
+          primaryTextColor: next === 'dark' ? '#ffffff' : '#0a0a0a',
+          primaryBorderColor: next === 'dark' ? '#404040' : '#d4d4d4',
+          lineColor: next === 'dark' ? '#737373' : '#a1a1a1',
+          secondaryColor: next === 'dark' ? '#0a0a0a' : '#f5f5f5',
+          tertiaryColor: next === 'dark' ? '#262626' : '#e5e5e5',
+          mainBkg: (next === 'dark') ? '#171717' : '#fafafa',
+          nodeBorder: (next === 'dark') ? '#404040' : '#d4d4d4',
+          clusterBkg: (next === 'dark') ? '#0a0a0a' : '#ffffff',
+          clusterBorder: (next === 'dark') ? '#262626' : '#e5e5e5',
+          textColor: (next === 'dark') ? '#e5e5e5' : '#262626',
+          edgeLabelBackground: (next === 'dark') ? '#0a0a0a' : '#ffffff',
+          actorBkg: (next === 'dark') ? '#171717' : '#fafafa',
+          actorBorder: (next === 'dark') ? '#404040' : '#d4d4d4',
+          actorTextColor: (next === 'dark') ? '#ffffff' : '#0a0a0a',
+          signalColor: (next === 'dark') ? '#a1a1a1' : '#525252',
+          signalTextColor: (next === 'dark') ? '#e5e5e5' : '#262626',
+          noteBkgColor: (next === 'dark') ? '#262626' : '#f5f5f5',
+          noteBorderColor: (next === 'dark') ? '#404040' : '#d4d4d4',
+          noteTextColor: (next === 'dark') ? '#e5e5e5' : '#262626',
+          fontFamily: '"Geist", -apple-system, sans-serif',
           fontSize: '13px'
         }
       });
@@ -1053,6 +1067,7 @@ window.App = (() => {
     toggleTheme,
     renderCurrentView,
     renderSidebar,
+    initMermaid,
     openDiagramLightbox,
     closeDiagramLightbox
   };

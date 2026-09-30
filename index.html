@@ -5,20 +5,20 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>System Design In Depth</title>
-  <meta name="description" content="Deep system design curriculum — 18 modules, 200 units, 118 architecture diagrams, from-scratch algorithm builds, and curated video walkthroughs for senior engineers.">
+  <meta name="description" content="Deep system design curriculum — 18 modules, 200 units, 182 architecture diagrams, 470 hand-picked video explainers, from-scratch algorithm builds for senior engineers.">
   <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#111315">
+  <meta name="theme-color" content="#000000">
   
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="System Design In Depth">
-  <meta property="og:description" content="Deep system design curriculum — 18 modules, 200 units, 118 architecture diagrams, from-scratch algorithm builds, and curated video walkthroughs for senior engineers.">
+  <meta property="og:description" content="Deep system design curriculum — 18 modules, 200 units, 182 architecture diagrams, 470 hand-picked video explainers, from-scratch algorithm builds for senior engineers.">
   <meta property="og:url" content="https://systemdesign.in">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="System Design In Depth">
-  <meta name="twitter:description" content="Deep system design curriculum — 18 modules, 200 units, 118 architecture diagrams, from-scratch algorithm builds, and curated video walkthroughs for senior engineers.">
+  <meta name="twitter:description" content="Deep system design curriculum — 18 modules, 200 units, 182 architecture diagrams, 470 hand-picked video explainers, from-scratch algorithm builds for senior engineers.">
   
   <!-- Canonical -->
   <link rel="canonical" href="https://systemdesign.in">
@@ -28,13 +28,13 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/content.css">
+  <link rel="stylesheet" href="css/variables.css?v=544d272d9a">
+  <link rel="stylesheet" href="css/layout.css?v=d51fb5dfe4">
+  <link rel="stylesheet" href="css/components.css?v=ef8b78bc61">
+  <link rel="stylesheet" href="css/content.css?v=757b22ae99">
 
   <!-- Google Analytics 4 (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SZ26BQZCQ7" id="ga4-gtag-script"></script>
@@ -55,10 +55,11 @@
         const stored = localStorage.getItem('sd-theme');
         const dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111315' : '#fbfbfb');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#000000' : '#ffffff');
       } catch {}
     })();
   </script>
+  <script>window.ASSET_VERSION = "638557a3ee";</script>
 </head>
 <body>
   <!-- Skip to content -->
@@ -112,7 +113,7 @@
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Course navigation">
     <nav class="sidebar__tabs" role="tablist">
       <button class="sidebar__tab active" data-tab="curriculum" role="tab" aria-selected="true">Curriculum</button>
-      <button class="sidebar__tab" data-tab="builds" role="tab" aria-selected="false">12 Builds</button>
+      <button class="sidebar__tab" data-tab="builds" role="tab" aria-selected="false">15 Builds</button>
     </nav>
     <div class="sidebar__content" id="sidebar-content"></div>
   </aside>
@@ -180,60 +181,63 @@
   </div>
 
   <!-- Data Scripts -->
-  <script defer src="data/curriculum.js"></script>
-  <script defer src="data/implementations_code.js"></script>
-  <script defer src="data/projects.js"></script>
-  <script defer src="data/glossary.js"></script>
-  <script defer src="data/content/m01-foundations.js"></script>
-  <script defer src="data/content/m02-apis-protocols.js"></script>
-  <script defer src="data/content/m03-data-modeling-sql.js"></script>
-  <script defer src="data/content/m04-nosql-partitioning.js"></script>
-  <script defer src="data/content/m05-caching.js"></script>
-  <script defer src="data/content/m06-distributed-coord.js"></script>
-  <script defer src="data/content/m07-storage-engines.js"></script>
-  <script defer src="data/content/m08-async-streams.js"></script>
-  <script defer src="data/content/m09-search-retrieval.js"></script>
-  <script defer src="data/content/m10-analytics-sketches.js"></script>
-  <script defer src="data/content/m11-realtime-social.js"></script>
-  <script defer src="data/content/m12-geo-matching.js"></script>
-  <script defer src="data/content/m13-media-cdn.js"></script>
-  <script defer src="data/content/m14-reliability-ops.js"></script>
-  <script defer src="data/content/m15-service-designs.js"></script>
-  <script defer src="data/content/m16-product-designs.js"></script>
-  <script defer src="data/content/m17-media-ops-designs.js"></script>
-  <script defer src="data/content/m18-case-studies.js"></script>
+  <script defer src="data/curriculum.js?v=ed52a91626"></script>
+  <script defer src="data/implementations_code.js?v=4eb40c96bd"></script>
+  <script defer src="data/projects.js?v=8783850429"></script>
+  <script defer src="data/glossary.js?v=81c87d4aae"></script>
+  <script defer src="data/content/m01-foundations.js?v=61ad2f4191"></script>
+  <script defer src="data/content/m02-apis-protocols.js?v=8ce8b7cfca"></script>
+  <script defer src="data/content/m03-data-modeling-sql.js?v=1a2cae9e6b"></script>
+  <script defer src="data/content/m04-nosql-partitioning.js?v=2dec170ef5"></script>
+  <script defer src="data/content/m05-caching.js?v=091f5198c9"></script>
+  <script defer src="data/content/m06-distributed-coord.js?v=cf7d9dbabf"></script>
+  <script defer src="data/content/m07-storage-engines.js?v=e43a846052"></script>
+  <script defer src="data/content/m08-async-streams.js?v=a2f1e014f1"></script>
+  <script defer src="data/content/m09-search-retrieval.js?v=f9b1898389"></script>
+  <script defer src="data/content/m10-analytics-sketches.js?v=c870973fdc"></script>
+  <script defer src="data/content/m11-realtime-social.js?v=e87c177924"></script>
+  <script defer src="data/content/m12-geo-matching.js?v=b468335126"></script>
+  <script defer src="data/content/m13-media-cdn.js?v=ac87ceb492"></script>
+  <script defer src="data/content/m14-reliability-ops.js?v=7b029fe954"></script>
+  <script defer src="data/content/m15-service-designs.js?v=2d2ae83544"></script>
+  <script defer src="data/content/m16-product-designs.js?v=d8b386b063"></script>
+  <script defer src="data/content/m17-media-ops-designs.js?v=a3650de433"></script>
+  <script defer src="data/content/m18-case-studies.js?v=0f6a54aec2"></script>
 
   <!-- App Scripts -->
-  <script defer src="js/analytics.js"></script>
-  <script defer src="js/progress.js"></script>
-  <script defer src="js/search.js"></script>
-  <script defer src="js/exercises.js"></script>
-  <script defer src="js/simulators.js"></script>
-  <script defer src="js/simulators-extra.js"></script>
-  <script defer src="js/simulators-advanced.js"></script>
-  <script defer src="js/renderer.js"></script>
+  <script defer src="js/analytics.js?v=8e2304fc12"></script>
+  <script defer src="js/progress.js?v=8d04470dea"></script>
+  <script defer src="js/search.js?v=2ebf07c1f2"></script>
+  <script defer src="js/exercises.js?v=ad524429c3"></script>
+  <script defer src="js/simulators.js?v=d091a36e30"></script>
+  <script defer src="js/simulators-extra.js?v=37273649b6"></script>
+  <script defer src="js/simulators-advanced.js?v=3f59fb03a7"></script>
+  <script defer src="js/simulators-distributed.js?v=30d663cc4e"></script>
+  <script defer src="js/simulators-ops.js?v=ff1d2ff9b7"></script>
+  <script defer src="js/simulators-data.js?v=a0ae4e411f"></script>
+  <script defer src="js/renderer.js?v=1b4e3fc968"></script>
   
-  <script defer src="data/questions/q01-foundations.js"></script>
-  <script defer src="data/questions/q02-apis-protocols.js"></script>
-  <script defer src="data/questions/q03-data-modeling-sql.js"></script>
-  <script defer src="data/questions/q04-nosql-partitioning.js"></script>
-  <script defer src="data/questions/q05-caching.js"></script>
-  <script defer src="data/questions/q06-distributed-coord.js"></script>
-  <script defer src="data/questions/q07-storage-engines.js"></script>
-  <script defer src="data/questions/q08-async-streams.js"></script>
-  <script defer src="data/questions/q09-search-retrieval.js"></script>
-  <script defer src="data/questions/q10-analytics-sketches.js"></script>
-  <script defer src="data/questions/q11-realtime-social.js"></script>
-  <script defer src="data/questions/q12-geo-matching.js"></script>
-  <script defer src="data/questions/q13-media-cdn.js"></script>
-  <script defer src="data/questions/q14-reliability-ops.js"></script>
-  <script defer src="data/questions/q15-service-designs.js"></script>
-  <script defer src="data/questions/q16-product-designs.js"></script>
-  <script defer src="data/questions/q17-media-ops-designs.js"></script>
-  <script defer src="data/questions/q18-case-studies.js"></script>
-  <script defer src="js/quiz.js"></script>
+  <script defer src="data/questions/q01-foundations.js?v=81794753c2"></script>
+  <script defer src="data/questions/q02-apis-protocols.js?v=3ae8293a0e"></script>
+  <script defer src="data/questions/q03-data-modeling-sql.js?v=850e097b30"></script>
+  <script defer src="data/questions/q04-nosql-partitioning.js?v=41bb27dacb"></script>
+  <script defer src="data/questions/q05-caching.js?v=38cf2cc929"></script>
+  <script defer src="data/questions/q06-distributed-coord.js?v=7e99e2bc80"></script>
+  <script defer src="data/questions/q07-storage-engines.js?v=de2480bd0b"></script>
+  <script defer src="data/questions/q08-async-streams.js?v=a17fcbf5db"></script>
+  <script defer src="data/questions/q09-search-retrieval.js?v=8188f1b270"></script>
+  <script defer src="data/questions/q10-analytics-sketches.js?v=fe4b7da996"></script>
+  <script defer src="data/questions/q11-realtime-social.js?v=b7cc16595b"></script>
+  <script defer src="data/questions/q12-geo-matching.js?v=564a085047"></script>
+  <script defer src="data/questions/q13-media-cdn.js?v=514d931e44"></script>
+  <script defer src="data/questions/q14-reliability-ops.js?v=a69a9ddabc"></script>
+  <script defer src="data/questions/q15-service-designs.js?v=7028361a3a"></script>
+  <script defer src="data/questions/q16-product-designs.js?v=31779cc0d8"></script>
+  <script defer src="data/questions/q17-media-ops-designs.js?v=d3721b1ab1"></script>
+  <script defer src="data/questions/q18-case-studies.js?v=3c6df68044"></script>
+  <script defer src="js/quiz.js?v=6925d26197"></script>
   
-  <script defer src="js/app.js"></script>
+  <script defer src="js/app.js?v=42eb644f75"></script>
 
   <!-- Mermaid (lazy-loaded) -->
   <script>
@@ -249,17 +253,31 @@
           mermaid.initialize({
             startOnLoad: false,
             securityLevel: 'loose',
-            theme: isDark ? 'dark' : 'default',
+            theme: 'base', // base honours themeVariables; 'default'/'dark' override them
             themeVariables: {
               darkMode: isDark,
-              background: isDark ? '#141517' : '#ffffff',
-              primaryColor: isDark ? '#191a1c' : '#f8f9fa',
-              primaryTextColor: isDark ? '#f2f4f7' : '#1f2937',
-              primaryBorderColor: isDark ? '#36373b' : '#e5e7eb',
-              lineColor: isDark ? '#747d89' : '#9ca3af',
-              secondaryColor: isDark ? '#151617' : '#f3f4f6',
-              tertiaryColor: isDark ? '#202123' : '#e5e7eb',
-              fontFamily: '"Inter", -apple-system, sans-serif',
+              background: isDark ? '#0a0a0a' : '#ffffff',
+              primaryColor: isDark ? '#171717' : '#fafafa',
+              primaryTextColor: isDark ? '#ffffff' : '#0a0a0a',
+              primaryBorderColor: isDark ? '#404040' : '#d4d4d4',
+              lineColor: isDark ? '#737373' : '#a1a1a1',
+              secondaryColor: isDark ? '#0a0a0a' : '#f5f5f5',
+              tertiaryColor: isDark ? '#262626' : '#e5e5e5',
+          mainBkg: isDark ? '#171717' : '#fafafa',
+          nodeBorder: isDark ? '#404040' : '#d4d4d4',
+          clusterBkg: isDark ? '#0a0a0a' : '#ffffff',
+          clusterBorder: isDark ? '#262626' : '#e5e5e5',
+          textColor: isDark ? '#e5e5e5' : '#262626',
+          edgeLabelBackground: isDark ? '#0a0a0a' : '#ffffff',
+          actorBkg: isDark ? '#171717' : '#fafafa',
+          actorBorder: isDark ? '#404040' : '#d4d4d4',
+          actorTextColor: isDark ? '#ffffff' : '#0a0a0a',
+          signalColor: isDark ? '#a1a1a1' : '#525252',
+          signalTextColor: isDark ? '#e5e5e5' : '#262626',
+          noteBkgColor: isDark ? '#262626' : '#f5f5f5',
+          noteBorderColor: isDark ? '#404040' : '#d4d4d4',
+          noteTextColor: isDark ? '#e5e5e5' : '#262626',
+              fontFamily: '"Geist", -apple-system, sans-serif',
               fontSize: '13px'
             }
           });

@@ -67,7 +67,7 @@ Validate the completed pair, then publish a version selector naming both. Reader
 
 ## Practice publishing a complete candidate
 
-Before implementing the remote design, the [storage-engine download](/course-assets/system-design/m12-storage-engine.py) exercises a smaller local snapshot. It stores the whole two-word map as JSON, so this version loads values into memory and has no offset index.
+Before implementing the remote design, the storage-engine download exercises a smaller local snapshot. It stores the whole two-word map as JSON, so this version loads values into memory and has no offset index.
 
 Its helper writes a candidate in the same directory, flushes Python's buffer, calls \`os.fsync\`, replaces the published filename with \`os.replace\`, then synchronizes the directory. A successful same-filesystem rename provides an atomic name change; durable publication also depends on the synchronization succeeding and the filesystem's guarantees. Errors propagate.
 

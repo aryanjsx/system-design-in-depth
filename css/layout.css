@@ -617,7 +617,7 @@ ul, ol { list-style: none; }
   top: -100px;
   left: var(--space-4);
   background: var(--accent);
-  color: white;
+  color: var(--accent-fg);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--r-md);
   font-size: var(--text-sm);

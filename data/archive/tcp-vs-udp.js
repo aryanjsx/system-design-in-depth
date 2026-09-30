@@ -5,7 +5,7 @@ TCP and UDP are transport protocols: rules for moving data between applications 
 
 TCP provides an ordered stream of bytes and retransmits missing data. UDP sends separate messages, called datagrams, without adding delivery or ordering guarantees.
 
-![TCP can deliver writes cat and nap as reads ca and tnap. UDP retains separate cat and nap datagrams when both arrive.](/course-assets/system-design/research-pilot/style-comparison/tcp-editorial.webp)
+
 
 | Behavior | TCP | UDP |
 |---|---|---|
@@ -53,7 +53,7 @@ An ACK also doesn't prove that the server program processed the data. The server
 
 For a save operation, the client needs an application response confirming the save. If that response is lost, the client can still be unsure whether the save succeeded.
 
-![A TCP acknowledgment confirms receipt of bytes. In this example the bytes are in the server buffer and the application has not saved them yet.](/course-assets/system-design/research-pilot/style-comparison/tcp-sketch.webp)
+
 
 ## Connection setup and traffic control
 

@@ -52,7 +52,7 @@ Multiplying both fractions by 500 misses the contain margin. It gives (125,125),
 
 The generated preview below puts the marker over the source's upper-left circle. Its raster rounds the 62.5-pixel top offset to an integer row; the calculation above retains the fractional position.
 
-![Contained square preview with the chosen marker over the upper-left circle and blank margins above and below the image](/course-assets/system-design/m22-photo-overlay.png)
+
 
 For editing, invert the transform: subtract the offsets, then divide by the scaled source dimensions. Reject a click in a contain margin. For viewing, hide a point outside a cover crop instead of moving it to the edge, where it would label a different place.
 
@@ -135,7 +135,7 @@ An identical old approval retry only returns its historical receipt; it does not
 
 ## Run the geometry and HTTP example
 
-Save the [tagging service](/course-assets/system-design/m22-tagging.py), [shared helpers](/course-assets/system-design/m22-common.py) and [pinned image dependency](/course-assets/system-design/m22-image-requirements.txt) together. Use an isolated Python environment with the pinned Pillow version. The program generates geometric images, owns a temporary SQLite database and serves requests only on loopback.
+Save the tagging service, shared helpers and pinned image dependency together. Use an isolated Python environment with the pinned Pillow version. The program generates geometric images, owns a temporary SQLite database and serves requests only on loopback.
 
 \`\`\`bash title="setup"
 python3 -m venv /tmp/fanout-m22

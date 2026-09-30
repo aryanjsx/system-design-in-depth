@@ -76,7 +76,7 @@ window.Simulators = (() => {
   window.SIMULATORS["consistent-hashing"] = {
     id: "consistent-hashing",
     title: "Consistent Hashing Ring Visualizer",
-    slugs: ["consistent-hashing-load-balancing"],
+    slugs: ["consistent-hashing-load-balancing", "consistent-hashing", "range-partitioning-vs-consistent-hashing-storage"],
     blurb: "Observe how keys are distributed along a 360° circular hash ring. Add or remove nodes to see minimal key rebalancing in action!",
     render() {
       return `
@@ -125,7 +125,7 @@ window.Simulators = (() => {
   window.SIMULATORS["rate-limiter"] = {
     id: "rate-limiter",
     title: "Sliding Window Rate Limiter",
-    slugs: ["sliding-window-rate-limiter", "rate-limiting-and-abuse-prevention-case-study"],
+    slugs: ["sliding-window-rate-limiter", "rate-limiting-and-abuse-prevention-case-study", "rate-limiter-placement-and-keys"],
     blurb: "Simulate client traffic bursts. If requests exceed 5 requests/sec, subsequent requests are throttled with HTTP 429.",
     render() {
       return `
