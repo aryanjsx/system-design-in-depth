@@ -25,9 +25,11 @@ If you are contributing to the platform code:
 - **Modules:** Use IIFE modules assigned to `window.*`.
 - **Data Files:** Must be plain `.js` files that assign to window globals (e.g., `window.DATA_NAME = ...`). This ensures they work via `file://` protocol without CORS issues.
 - **State:** State persists only in `localStorage`.
+- **Cache-busting:** After changing any JS, CSS or data file, run `node tools/stamp-assets.js`. It rewrites the `?v=<hash>` on every script/stylesheet tag in `index.html` and `projects/index.html`. `_headers` caches those files as immutable for a year, so an unstamped change would not reach returning visitors. The validator fails if stamps are stale.
 
 ## PR Checklist
 Before submitting a Pull Request, ensure:
+- [ ] `node tools/stamp-assets.js` has been run after your last JS/CSS/data change
 - [ ] `node tools/validate.js` exits 0 without errors
 - [ ] No new runtime dependencies were introduced
 - [ ] Tested and working in a browser from the `file://` protocol

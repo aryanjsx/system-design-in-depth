@@ -286,7 +286,7 @@ window.SIMULATORS["latency-budget"] = {
 window.SIMULATORS["fan-out"] = {
   id: "fan-out",
   title: "Fan-out: Push vs Pull",
-  slugs: ["feed-generation-push-pull-hybrid"],
+  slugs: ["feed-generation-push-pull-hybrid", "fanout-patterns", "social-feed-system-design-case-study"],
   blurb: "Compare Write Amplification vs Read Amplification in Feed Generation.",
   render() {
     return `
@@ -701,7 +701,7 @@ window.SIMULATORS["raft-election"] = {
 window.SIMULATORS["bloom-filter"] = {
   id: "bloom-filter",
   title: "Bloom Filter Visualizer",
-  slugs: ["bloom-filters", "seen-filtering-with-bloom-filters"],
+  slugs: ["bloom-filters", "seen-filtering-bloom-vs-exact-sets", "lsm-read-path-bloom-and-sparse-index"],
   blurb: "Add elements and visualize bit hashing to see false positive probabilities.",
   render() {
     return `
@@ -817,7 +817,7 @@ window.SIMULATORS["bloom-filter"] = {
 window.SIMULATORS["lsm-btree"] = {
   id: "lsm-btree",
   title: "Storage Engine Write Path (LSM vs B-Tree)",
-  slugs: ["lsm-tree-storage-engine", "b-tree"],
+  slugs: ["lsm-tree-storage-engine", "b-tree", "memtable-wal-and-sstable", "compaction-and-amplification", "storage-engine-tradeoffs"],
   blurb: "Compare Sequential vs Random write amplification in LSM Trees and B-Trees.",
   render() {
     return `

@@ -2,664 +2,858 @@ window.QUESTION_BANK = window.QUESTION_BANK || {};
 
 window.QUESTION_BANK["api-design-contracts"] = [
   {
-    id: "api-design-contracts-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Api Design Contracts?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "api-design-contracts-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Reused idempotency key",
+    "section": "Core Elements of Production-Grade API Contracts",
+    "prompt": "A client retries POST /v1/links with the same Idempotency-Key as an earlier request, but the request body is different this time. What should the server do?",
+    "options": [
+      "Reject it as an error, because the key was reused for a different request",
+      "Replay the stored response from the first request under that key",
+      "Run the business logic again, because the body shows it is a new operation",
+      "Replace the stored response with the result of the new request"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["api-design-contracts", "basics"]
+    "answer": 0,
+    "explanation": "The server stores a hash of the request body with the key, so a retry with the same key and the same body replays the stored response, while the same key with a different body is rejected (for example with 422). Replaying anyway is the tempting choice, but it would quietly hide a client bug and return a result for a request the client did not send.",
+    "tags": [
+      "api-design-contracts",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "api-design-contracts-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Api Design Contracts, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "api-design-contracts-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Which change is additive",
+    "section": "Compatibility rules at a glance",
+    "prompt": "Old mobile app versions will keep calling POST /v1/links for years. Which change can you ship without a new API version?",
+    "options": [
+      "Return 200 instead of 201, since both status codes mean success",
+      "Add a new value to the link status enum that clients switch on",
+      "Add an optional expires_at request field with a sensible server default",
+      "Reject destination URLs longer than 2,000 characters that were accepted before"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["api-design-contracts", "troubleshooting"]
+    "answer": 2,
+    "explanation": "A new optional request field is additive: old clients never send it and the server's default keeps their behaviour the same. The new enum value is the tempting choice because it looks additive, but clients with exhaustive switch statements can crash on it. Tightening validation and changing status codes break requests that used to work.",
+    "tags": [
+      "api-design-contracts",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "api-design-contracts-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Api Design Contracts at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "api-design-contracts-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Key stored outside the transaction",
+    "section": "Failure modes",
+    "prompt": "The server inserts the link and commits, then writes the idempotency record (key, body hash, response) in a second transaction. What can go wrong?",
+    "options": [
+      "Concurrent retries return 422, because the key already exists in the store",
+      "Keys expire before the 24-hour retention window has passed",
+      "Replayed responses carry a stale created_at value from the first attempt",
+      "A crash between the two commits lets a retry create the link a second time"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["api-design-contracts", "architecture"]
+    "answer": 3,
+    "explanation": "If the process dies after the link commits but before the key is saved, a retry finds no record and runs the insert again. That is why the key, hash and response must be written in the same transaction as the side effect. The concurrent-retry problem is real too, but its fix is locking the key or inserting it first with an in-progress status.",
+    "tags": [
+      "api-design-contracts",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["service-to-service-communication"] = [
   {
-    id: "service-to-service-communication-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Service To Service Communication?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "service-to-service-communication-c1",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Remaining deadline wins",
+    "section": "Worked example: deadline budget across a call chain",
+    "prompt": "A user request arrives with a 300 ms deadline. The API spends 120 ms, then the order service spends 100 ms before calling inventory. Inventory's own timeout target (p99.9 plus margin) is 150 ms. What timeout should the order service use for that call?",
+    "options": [
+      "150 ms, inventory's own latency target",
+      "300 ms, the user's original deadline",
+      "80 ms, the time left in the caller's deadline",
+      "2 s, a fixed client-library default"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["service-to-service-communication", "basics"]
+    "answer": 2,
+    "explanation": "The rule is to use the smaller of the hop's own latency target and the caller's remaining deadline: 300 minus 220 leaves 80 ms, which is less than 150 ms. Using 150 ms is tempting because it is the service's own target, but the user's request would already be gone for up to 70 ms of that work.",
+    "tags": [
+      "service-to-service-communication",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "service-to-service-communication-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Service To Service Communication, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "service-to-service-communication-c2",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Broker delivery semantics",
+    "section": "Choosing a style",
+    "prompt": "When services communicate through a typical queue or log broker, what delivery behaviour should consumers be designed for?",
+    "options": [
+      "Exactly-once delivery, because the broker stores every message durably",
+      "At-least-once delivery, so duplicates and reordering can happen",
+      "At-most-once delivery, so consumers must request any missing messages",
+      "Exactly-once, in order, for all messages that share a partition"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["service-to-service-communication", "troubleshooting"]
+    "answer": 1,
+    "explanation": "Most brokers deliver at least once, so a consumer can see the same message twice, or out of order, and must process messages idempotently. Durability is the tempting reason to pick exactly-once, but storing a message safely says nothing about how many times a consumer will be handed it after a crash or rebalance.",
+    "tags": [
+      "service-to-service-communication",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "service-to-service-communication-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Service To Service Communication at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "service-to-service-communication-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Commit then publish",
+    "section": "Mechanics that matter",
+    "prompt": "The order service commits an order row, then publishes order.created to Kafka as a separate step. Sometimes it crashes between the two, and billing never hears about the order. What is the standard fix?",
+    "options": [
+      "Publish the event first, then commit the order row once Kafka confirms",
+      "Keep retrying the publish in the process until it succeeds before replying",
+      "Raise the Kafka producer timeout so slow publishes are less likely to fail",
+      "Write the event to an outbox table in the same transaction and let a relay publish it"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["service-to-service-communication", "architecture"]
+    "answer": 3,
+    "explanation": "With a transactional outbox, the row and the event commit together, so a relay can publish the event later, even after a crash, and neither is lost. Publishing first just reverses the problem: billing hears about an order that never committed. In-process retries die along with the process.",
+    "tags": [
+      "service-to-service-communication",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["http-rest-grpc"] = [
   {
-    id: "http-rest-grpc-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Http Rest Grpc?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "http-rest-grpc-c1",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Counting Protobuf bytes",
+    "section": "Worked example: the same message in JSON and Protobuf",
+    "prompt": "Using the lesson's encoding rules, a message has int64 id = 1 set to 150 (a 2-byte varint) and string name = 2 set to \"bob\". How many bytes is the Protobuf encoding?",
+    "options": [
+      "6 bytes",
+      "11 bytes",
+      "8 bytes",
+      "14 bytes"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["http-rest-grpc", "basics"]
+    "answer": 2,
+    "explanation": "id takes 1 tag byte plus a 2-byte varint (3 bytes), and name takes 1 tag byte, 1 length byte and 3 bytes of text (5 bytes), for 8 in total. Six bytes is what you get if you forget the tag and length bytes. The saving over JSON comes mostly from not repeating the field names.",
+    "tags": [
+      "http-rest-grpc",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "http-rest-grpc-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Http Rest Grpc, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "http-rest-grpc-c2",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "HTTP/2's remaining stall",
+    "section": "HTTP versions in one table",
+    "prompt": "HTTP/2 multiplexes many streams over one connection and removes head-of-line blocking at the HTTP layer. What can still stall every stream on that connection?",
+    "options": [
+      "A single lost TCP packet, since TCP delivers bytes strictly in order",
+      "A slow response on any one stream, since frames are sent in turn",
+      "The browser's cap of about six connections per host",
+      "Header compression state that must be rebuilt for each stream"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["http-rest-grpc", "troubleshooting"]
+    "answer": 0,
+    "explanation": "HTTP/2 still runs on one TCP byte stream, so a lost packet holds back data for all streams until it is retransmitted. HTTP/3 moves to QUIC so that a loss only stalls the streams whose data it carried. The six-connection limit applies to HTTP/1.1, which is the problem multiplexing was designed to remove.",
+    "tags": [
+      "http-rest-grpc",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "http-rest-grpc-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Http Rest Grpc at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "http-rest-grpc-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "gRPC pinned behind L4",
+    "section": "Operational gotchas",
+    "prompt": "Service A calls service B over gRPC through an L4 network load balancer. B scales from 4 to 12 pods, but nearly all traffic stays on the original 4. What is the most likely cause?",
+    "options": [
+      "gRPC clients cache DNS results permanently, as required by the gRPC spec",
+      "The new pods fail health checks, because gRPC cannot serve HTTP health probes",
+      "A's long-lived HTTP/2 connections were balanced once per connection and stay pinned",
+      "The new pods run a newer .proto schema, so A's calls are routed away from them"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["http-rest-grpc", "architecture"]
+    "answer": 2,
+    "explanation": "HTTP/2 keeps one long-lived connection that carries many calls, and an L4 balancer only makes a choice when a connection opens, so existing calls keep going to the old backends. The fix is per-request L7 balancing or client-side balancing. The DNS option sounds plausible, but it is not what the protocol requires, and it would not explain pinning behind a single load balancer address.",
+    "tags": [
+      "http-rest-grpc",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["tcp-vs-udp"] = [
   {
-    id: "tcp-vs-udp-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Tcp Vs Udp?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "tcp-vs-udp-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "TCP head-of-line blocking",
+    "section": "Detailed Protocol Mechanics",
+    "prompt": "Over one TCP connection, segments 1 to 5 are sent and segment 2 is lost, while 3, 4 and 5 arrive. What does the receiving application see until 2 is retransmitted?",
+    "options": [
+      "Segments 1, 3, 4 and 5 as they arrive, with a gap left for 2",
+      "Only segment 1; the kernel holds 3 to 5 until 2 arrives",
+      "Nothing at all, since the connection pauses until every ACK returns",
+      "Segments 3 to 5 flagged as out of order, for the app to reorder"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["tcp-vs-udp", "basics"]
+    "answer": 1,
+    "explanation": "TCP delivers an in-order byte stream, so the kernel buffers 3 to 5 and releases nothing beyond 1 until 2 is retransmitted. This is head-of-line blocking. Delivering with a gap is how UDP-based media behaves, where the application decides to skip lost data.",
+    "tags": [
+      "tcp-vs-udp",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "tcp-vs-udp-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Tcp Vs Udp, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "tcp-vs-udp-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Handshake round trips",
+    "section": "Worked example: what a handshake costs",
+    "prompt": "A client is 50 ms round-trip from the server. Roughly how long until the first byte of the response, for a new TCP plus TLS 1.3 connection versus a new QUIC connection?",
+    "options": [
+      "About 150 ms for TCP plus TLS 1.3, and about 100 ms for QUIC",
+      "About 100 ms for TCP plus TLS 1.3, and about 50 ms for QUIC",
+      "About 200 ms for TCP plus TLS 1.3, and about 100 ms for QUIC",
+      "About 150 ms for TCP plus TLS 1.3, and about 50 ms for QUIC"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["tcp-vs-udp", "troubleshooting"]
+    "answer": 0,
+    "explanation": "TCP plus TLS 1.3 needs 1 round trip for TCP, 1 for TLS and 1 for the request, which is 3 times 50 ms. QUIC combines the transport and TLS handshakes into 1 round trip, plus 1 for the request, giving 100 ms. The 50 ms QUIC figure is tempting, but that is resumed 0-RTT, not a new connection.",
+    "tags": [
+      "tcp-vs-udp",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "tcp-vs-udp-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Tcp Vs Udp at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "tcp-vs-udp-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Switching networks mid-session",
+    "section": "Failure modes and gotchas",
+    "prompt": "A mobile app holds a long-lived connection to your API, and the phone moves from Wi-Fi to cellular, which changes its IP address. How do TCP and QUIC compare?",
+    "options": [
+      "Both survive, because the TLS session ticket carries the session across",
+      "Both break, because any transport is tied to the client's IP and port",
+      "TCP survives thanks to keep-alive probes; QUIC must redo its handshake",
+      "The TCP connection breaks; QUIC can carry on using its connection ID"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["tcp-vs-udp", "architecture"]
+    "answer": 3,
+    "explanation": "A TCP connection is identified by its address and port 4-tuple, so a new IP address breaks it. QUIC connections carry a connection ID, which lets them migrate to the new address. Session tickets are tempting, but they only speed up a new handshake; they do not keep the old connection alive.",
+    "tags": [
+      "tcp-vs-udp",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["api-gateway-vs-load-balancer"] = [
   {
-    id: "api-gateway-vs-load-balancer-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Api Gateway Vs Load Balancer?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "api-gateway-vs-load-balancer-c1",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Local rate limits and skew",
+    "section": "Worked example: a request through both",
+    "prompt": "A partner's quota is 100 requests per second. Ten gateway instances each enforce 10 per second locally. The partner sends 80 per second, but 40% of that lands on a single instance. What happens?",
+    "options": [
+      "Nothing is rejected, since 80 per second is under the partner's quota",
+      "About 22 per second are rejected even though the partner is under quota",
+      "About 8 per second are rejected, spread across all ten instances",
+      "Everything on the busy instance is rejected until traffic rebalances"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["api-gateway-vs-load-balancer", "basics"]
+    "answer": 1,
+    "explanation": "The busy instance receives 32 per second against a local limit of 10, so it rejects about 22, while the other nine see about 5 each and reject nothing. This is the lesson's warning that local limits are cheap but uneven when traffic is skewed. A shared counter would be accurate, at the cost of about 1 ms per request.",
+    "tags": [
+      "api-gateway-vs-load-balancer",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "api-gateway-vs-load-balancer-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Api Gateway Vs Load Balancer, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "api-gateway-vs-load-balancer-c2",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "What L4 cannot see",
+    "section": "Responsibility table",
+    "prompt": "Which of these jobs is beyond an L4 load balancer such as AWS NLB, but routine for an API gateway?",
+    "options": [
+      "Spreading new TCP connections across healthy backends",
+      "Routing requests for /v1/orders/* to the order service by path",
+      "Passing encrypted TLS traffic through to backends unchanged",
+      "Taking unhealthy instances out of rotation based on checks"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["api-gateway-vs-load-balancer", "troubleshooting"]
+    "answer": 1,
+    "explanation": "An L4 balancer sees only IP addresses, ports and the transport protocol, so it cannot read the HTTP path it would need for routing. TLS pass-through is the tempting wrong choice, but it is common at L4 precisely because the balancer never has to decrypt or parse the request.",
+    "tags": [
+      "api-gateway-vs-load-balancer",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "api-gateway-vs-load-balancer-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Api Gateway Vs Load Balancer at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "api-gateway-vs-load-balancer-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Health checks that lie",
+    "section": "Failure modes",
+    "prompt": "A backend's database pool deadlocks, and every HTTP request to it now returns 500. The load balancer uses a TCP-connect health check. What happens?",
+    "options": [
+      "The node stays in rotation, because it still accepts TCP connections",
+      "The node is ejected after 2 to 3 failed checks, as with any failure",
+      "The balancer spots the 500s and slowly drains the node's connections",
+      "Traffic moves away once the node's CPU rises above normal levels"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["api-gateway-vs-load-balancer", "architecture"]
+    "answer": 0,
+    "explanation": "The process is still listening, so a TCP check keeps passing while every request fails. The lesson recommends an HTTP health endpoint that checks the app's real readiness. Ejection after 2 to 3 failures is the tempting answer, but it only happens if the check itself fails, and a TCP check will not.",
+    "tags": [
+      "api-gateway-vs-load-balancer",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["load-balancers"] = [
   {
-    id: "load-balancers-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Load Balancers?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "load-balancers-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Herding on stale state",
+    "section": "Under the Hood: Algorithm Deep Dive",
+    "prompt": "Why does having every load balancer instance send each request to the globally least-loaded server work poorly with many independent balancers?",
+    "options": [
+      "Finding the minimum takes O(n) time, which is too slow to do per request",
+      "Least-loaded ignores request duration, so long requests still pile up",
+      "They act on the same stale view and all pick the same server at once",
+      "It forces sticky sessions, which breaks backends that are stateless"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["load-balancers", "basics"]
+    "answer": 2,
+    "explanation": "Balancers working from the same slightly stale load numbers all pick the same apparently idle server, which overloads it. This is called herding. Power of two choices avoids it using only local information. The O(n) cost is the tempting answer, but the lesson's real objection is that the shared state is stale, not that the search is slow.",
+    "tags": [
+      "load-balancers",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "load-balancers-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Load Balancers, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "load-balancers-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Two choices, in numbers",
+    "section": "Worked example: why random is not good enough, and two choices is",
+    "prompt": "You send 1,000 requests to 1,000 servers. Roughly what is the busiest server's load when each request picks one server at random, versus when it samples two and takes the less loaded?",
+    "options": [
+      "About 5 or 6 with random choice, and about 3 with two choices",
+      "About 3 with random choice, and exactly 1 with two choices",
+      "About 2 with either strategy, since the average load is 1",
+      "About 30 with random choice, and about 10 with two choices"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["load-balancers", "troubleshooting"]
+    "answer": 0,
+    "explanation": "Random placement's maximum grows like log n divided by log log n, and for n = 1,000 it is typically 5 or 6 in practice (the formula itself gives only about 3.6 here, because constant factors still matter at this size), while two choices grows only as log log n, typically about 3. Exactly 1 is tempting, but it would need perfect global coordination, and sampling more than two servers adds only small gains.",
+    "tags": [
+      "load-balancers",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "load-balancers-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Load Balancers at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "load-balancers-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Deep checks fail together",
+    "section": "Health checking details",
+    "prompt": "Every node's /healthz also runs a database query. The database blips for 5 seconds, and the balancer marks a node down after 2 failed checks. What happens, and which setting limits the damage?",
+    "options": [
+      "Only the nodes with the slowest queries fail, and outlier detection removes them",
+      "Every node is marked down at once; a panic threshold keeps sending traffic to all of them",
+      "Connection draining lets in-flight requests finish, so users notice nothing at all",
+      "Nodes stay healthy, because active checks ignore dependency errors by default"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["load-balancers", "architecture"]
+    "answer": 1,
+    "explanation": "A health check that depends on a shared database fails on every node at the same moment, emptying the pool. With a panic threshold, when too many nodes look unhealthy (for example over 50%), the balancer sends traffic to all of them instead of to nobody. Outlier detection ejects individual bad nodes, which does not help when all of them look bad.",
+    "tags": [
+      "load-balancers",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["consistent-hashing-load-balancing"] = [
   {
-    id: "consistent-hashing-load-balancing-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Consistent Hashing Load Balancing?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "consistent-hashing-load-balancing-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why random routing hurts caches",
+    "section": "Under the Hood: Sticky Routing & Cache Locality",
+    "prompt": "A tier of N servers each keeps an in-process cache. Why does routing requests at random, instead of by key, hurt the hit rate?",
+    "options": [
+      "Random routing breaks the TTLs, so entries expire at different times",
+      "Each node ends up caching the whole working set, cutting capacity about N times",
+      "Random routing sends more requests to each node, so entries are evicted faster",
+      "Nodes must copy entries to each other on every write, which adds latency"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["consistent-hashing-load-balancing", "basics"]
+    "answer": 1,
+    "explanation": "With random routing, every key can land on any node, so each node tries to hold the same hot set, and the tier's effective cache is only about one node's worth. Routing by key partitions the set across nodes. The request-volume option is tempting, but random routing does not change the total load on each node, only which keys each node sees.",
+    "tags": [
+      "consistent-hashing-load-balancing",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "consistent-hashing-load-balancing-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Consistent Hashing Load Balancing, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "consistent-hashing-load-balancing-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Keys moved on scale-out",
+    "section": "Worked example: how many keys move",
+    "prompt": "A cache tier grows from 20 to 21 servers and holds 210 million keys. Roughly how many keys change servers with hash mod N, and with a consistent-hash ring?",
+    "options": [
+      "About 10 million with modulo hashing, and about 10 million with the ring",
+      "About 105 million with modulo hashing, and about 10 million with the ring",
+      "About 200 million with modulo hashing, and about 200 million with the ring",
+      "About 200 million with modulo hashing, and about 10 million with the ring"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["consistent-hashing-load-balancing", "troubleshooting"]
+    "answer": 3,
+    "explanation": "With modulo hashing, a key only stays put if hash mod 20 equals hash mod 21, which is true for about 1 in 21 keys, so about 200 million move. With a ring, the new server takes about 1/21 of the key space, around 10 million keys. The 105 million option is the tempting halfway guess that has no basis in either scheme.",
+    "tags": [
+      "consistent-hashing-load-balancing",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "consistent-hashing-load-balancing-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Consistent Hashing Load Balancing at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "consistent-hashing-load-balancing-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Dead server, one heir",
+    "section": "Failure modes",
+    "prompt": "A ring places one point per server, with no virtual nodes. One server dies during peak traffic. What is the main risk?",
+    "options": [
+      "Its keys scatter evenly across the survivors, so each gets about 1/N more load",
+      "Every key on the ring is remapped, so all caches start cold at the same time",
+      "Its whole arc goes to the next server clockwise, which may then overload and fail too",
+      "Clients stop routing requests until a coordinator publishes a new server list"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["consistent-hashing-load-balancing", "architecture"]
+    "answer": 2,
+    "explanation": "Without virtual nodes, the dead server's entire range lands on a single neighbour, which can overload it and set off a chain of failures around the ring. Even spreading is the tempting answer, but that is exactly what virtual nodes provide, and they are missing here. Remapping every key describes modulo hashing, not a ring.",
+    "tags": [
+      "consistent-hashing-load-balancing",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["event-contracts"] = [
   {
-    id: "event-contracts-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Event Contracts?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "event-contracts-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Upgrade order for BACKWARD",
+    "section": "Schema Evolution Compatibility Modes",
+    "prompt": "Under BACKWARD compatibility (Confluent's default), which side must be upgraded first when a schema changes, and why?",
+    "options": [
+      "Consumers first, because the new schema must read events written with the old one",
+      "Producers first, because old consumers must be able to read the new events",
+      "Either side first, because BACKWARD allows both upgrade orders",
+      "Producers first, because the registry rejects reads that use an old schema"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["event-contracts", "basics"]
+    "answer": 0,
+    "explanation": "BACKWARD means new reader code can read data written with the previous schema, so consumers upgrade first while producers are still writing old events. Producers first is the rule for FORWARD compatibility, and it is the most common mix-up. Only FULL compatibility allows either order.",
+    "tags": [
+      "event-contracts",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "event-contracts-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Event Contracts, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "event-contracts-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "New field, no default",
+    "section": "Worked example: adding a field to OrderPlaced",
+    "prompt": "The registry runs in BACKWARD mode. A team adds a required string field channel to OrderPlaced with no default value. What happens when they register the schema?",
+    "options": [
+      "It is accepted, because adding a field is always a safe, additive change",
+      "It is rejected, because new consumers could not read old events that lack the field",
+      "It is accepted, but only old consumers will fail when they read new events",
+      "It is rejected, because BACKWARD mode forbids adding any new field at all"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["event-contracts", "troubleshooting"]
+    "answer": 1,
+    "explanation": "A new reader schema needs a value for channel when it reads old events that do not have one, and without a default it cannot fill that in, so the registry rejects the change. \"Adding a field is safe\" is the tempting answer carried over from APIs; with Avro the default is what makes the addition compatible.",
+    "tags": [
+      "event-contracts",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "event-contracts-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Event Contracts at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "event-contracts-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Replays need transitive checks",
+    "section": "Compatibility modes",
+    "prompt": "A topic keeps events forever. The registry uses BACKWARD, not BACKWARD_TRANSITIVE. Schema v3 passed the check against v2 but would fail against v1. A new consumer replays from the start. What breaks?",
+    "options": [
+      "Nothing, because each version was checked against the one before it",
+      "Only producers still writing v1 fail, and the registry rejects their writes",
+      "The consumer can fail on the oldest v1 events, which v3 was never checked against",
+      "The consumer reads v1 events correctly but silently drops v2 fields"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["event-contracts", "architecture"]
+    "answer": 2,
+    "explanation": "Plain BACKWARD checks a new schema only against the latest version, so compatibility with older data is not guaranteed. The lesson notes that the TRANSITIVE modes are needed when consumers replay old history. \"Each step was checked\" is the tempting answer, but compatibility is not guaranteed to carry across several steps.",
+    "tags": [
+      "event-contracts",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["retries-timeouts-idempotency"] = [
   {
-    id: "retries-timeouts-idempotency-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Retries Timeouts Idempotency?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "retries-timeouts-idempotency-c1",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Layered retry multiplier",
+    "section": "Under the Hood: The Retry Storm Catastrophe",
+    "prompt": "The API, the order service and the database client each retry up to 2 times (3 attempts each). If every attempt fails, how many calls can one user request cause at the database?",
+    "options": [
+      "6",
+      "9",
+      "81",
+      "27"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["retries-timeouts-idempotency", "basics"]
+    "answer": 3,
+    "explanation": "Retries multiply across layers, so 3 attempts at each of 3 layers gives 3 times 3 times 3, which is 27 calls. Six is the tempting sum you get by adding the retries instead of multiplying them. This compounding is why retries should happen at one layer and be capped with a budget.",
+    "tags": [
+      "retries-timeouts-idempotency",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "retries-timeouts-idempotency-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Retries Timeouts Idempotency, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "retries-timeouts-idempotency-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Retry budget vs breaker",
+    "section": "Under the Hood: Retry Budgets & Timeout Tiers",
+    "prompt": "A client uses a 10% retry budget, and a dependency starts failing half of all requests. How does the budget behave differently from a circuit breaker?",
+    "options": [
+      "The budget stops every request once 10% of them fail, while a breaker only stops retries",
+      "The budget drops retries above 10% of traffic while originals flow; a breaker stops all requests",
+      "The budget delays retries with jitter up to a 10% cap, while a breaker drops them outright",
+      "The two behave the same way, and the budget is just a breaker measured in percentages"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["retries-timeouts-idempotency", "troubleshooting"]
+    "answer": 1,
+    "explanation": "A retry budget caps the extra load from retries, so original requests keep flowing and offered load stays near normal. A circuit breaker is a separate mechanism that stops sending any requests while the error rate stays high. The first option swaps the two roles, which is the usual confusion.",
+    "tags": [
+      "retries-timeouts-idempotency",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "retries-timeouts-idempotency-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Retries Timeouts Idempotency at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "retries-timeouts-idempotency-c3",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Safe to retry blindly",
+    "section": "Which failures to retry",
+    "prompt": "For a POST that is not idempotent and has no idempotency key, which failure can be retried without risking a duplicate side effect?",
+    "options": [
+      "The connection was refused before any bytes of the request were sent",
+      "The read timed out after the full request body had been sent",
+      "The server returned 500 Internal Server Error partway through",
+      "The server returned 422 because the payload failed validation"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["retries-timeouts-idempotency", "architecture"]
+    "answer": 0,
+    "explanation": "If the connection was refused before sending, the server never processed the request, so retrying cannot repeat it. A timeout after sending is the tempting case, but the outcome is unknown and the server may have done the work. 422 will simply fail again in the same way.",
+    "tags": [
+      "retries-timeouts-idempotency",
+      "recall",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["batching"] = [
   {
-    id: "batching-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Batching?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "batching-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Multi-row INSERT atomicity",
+    "section": "Under the Hood: Production Batching Invariants",
+    "prompt": "You write 500 click rows with one multi-row INSERT ... VALUES statement, and row 42 violates a unique constraint. What happens by default?",
+    "options": [
+      "The other 499 rows are inserted, and row 42 is reported as a failure",
+      "Rows 1 to 41 are kept, and the statement stops at row 42",
+      "The whole statement fails, and none of the 500 rows are inserted",
+      "Row 42 overwrites the existing row, and the insert succeeds"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["batching", "basics"]
+    "answer": 2,
+    "explanation": "A single SQL statement is atomic, so one duplicate key fails all 500 rows unless you add ON CONFLICT or handle rows individually. Per-item success is the tempting answer because good batch APIs are designed that way, but the database does not behave like that on its own.",
+    "tags": [
+      "batching",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "batching-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Batching, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "batching-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Throughput per worker",
+    "section": "Worked example: inserting click events",
+    "prompt": "Each database round trip costs 2 ms of fixed overhead, and each row adds 0.01 ms. With batches of 200 rows, roughly what throughput can one connection sustain?",
+    "options": [
+      "About 50,000 rows per second",
+      "About 100,000 rows per second",
+      "About 25,000 rows per second",
+      "About 500 rows per second"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["batching", "troubleshooting"]
+    "answer": 0,
+    "explanation": "Throughput is batch size divided by (fixed cost plus batch size times per-item cost): 200 divided by (2 ms plus 2 ms) is 50 rows per ms, or 50,000 per second. 100,000 is the tempting answer if you drop the per-row term, and that term is what makes bigger batches give diminishing returns.",
+    "tags": [
+      "batching",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "batching-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Batching at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "batching-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Acknowledged, then lost",
+    "section": "Failure modes",
+    "prompt": "A logging client tells callers \"written\" as soon as a record enters its in-memory batch, and it flushes every 50 ms. The process is OOM-killed. What is the consequence, and what is the fix?",
+    "options": [
+      "Nothing is lost, because the kernel flushes the process's buffers when it exits",
+      "Only records that were already being sent are lost; add retries on reconnect",
+      "The whole log file is corrupted; switch to smaller batches with a shorter linger",
+      "Up to about 50 ms of acknowledged records vanish; acknowledge only after the flush"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["batching", "architecture"]
+    "answer": 3,
+    "explanation": "In-memory batches are not durable until they are flushed, so everything acknowledged since the last flush is lost with the process. If callers need durability, the acknowledgement must wait for the flush. Kernel flushing is the tempting answer, but it only covers data already handed to the operating system, not a buffer inside the application's heap.",
+    "tags": [
+      "batching",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["backpressure"] = [
   {
-    id: "backpressure-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Backpressure?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "backpressure-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "TCP zero window",
+    "section": "Under the Hood: The Three Backpressure Defenses",
+    "prompt": "A consumer's application thread stops reading from its TCP socket, while the sender keeps writing. What happens at the transport layer?",
+    "options": [
+      "The receiver's kernel drops the new segments, and the sender retransmits them",
+      "The receive buffer fills, the window shrinks to zero, and the sender's kernel stops sending",
+      "The sender's kernel buffers data without limit until the receiver starts reading again",
+      "The connection is reset after a timeout, because the receiver looks unresponsive"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["backpressure", "basics"]
+    "answer": 1,
+    "explanation": "TCP flow control advertises the receiver's free buffer space as its window. When the application stops reading, the window drops to zero and the sender pauses, which is backpressure built into the kernel. Dropping and retransmitting is the tempting answer, but that is loss recovery, not flow control.",
+    "tags": [
+      "backpressure",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "backpressure-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Backpressure, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "backpressure-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Draining the backlog",
+    "section": "Worked example: how fast a queue fills",
+    "prompt": "A consumer handles 2,000 messages per second. A spike sends 2,500 per second for 20 minutes, then arrivals drop back to 1,500 per second. How long does the backlog take to clear after the spike?",
+    "options": [
+      "About 5 minutes",
+      "About 10 minutes",
+      "About 20 minutes",
+      "About 5 hours"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["backpressure", "troubleshooting"]
+    "answer": 2,
+    "explanation": "The backlog grows by 500 per second for 1,200 seconds, reaching 600,000 messages, and afterwards the consumer has only 500 per second of spare capacity, so draining takes 1,200 seconds, about 20 minutes. Five minutes is the tempting answer if you divide by the full 2,000 per second and forget that new messages keep arriving.",
+    "tags": [
+      "backpressure",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "backpressure-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Backpressure at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "backpressure-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Rejected, then retried",
+    "section": "Failure modes",
+    "prompt": "Your service correctly returns 503 when its queue is full, but load stays high and the queue never recovers. What is the most likely reason?",
+    "options": [
+      "Clients retry immediately, so rejected work returns as new load",
+      "503 is the wrong status code, since backpressure must use 429",
+      "The queue limit is too small, so it should be made unbounded",
+      "The TCP window has shrunk to zero, so the 503s never reach clients"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["backpressure", "architecture"]
+    "answer": 0,
+    "explanation": "Retry storms defeat backpressure: if rejected clients come straight back, the rejection only moves the pressure around. Clients need backoff and Retry-After, ideally together with retry budgets. Removing the limit is the tempting fix, but an unbounded queue just trades rejections for growing latency and, eventually, running out of memory.",
+    "tags": [
+      "backpressure",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["tail-latency"] = [
   {
-    id: "tail-latency-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Tail Latency?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "tail-latency-c1",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Fan-out to 50 leaves",
+    "section": "Worked example: fan-out amplification",
+    "prompt": "A request waits for 50 leaf servers, and each leaf is fast 99% of the time, independently. Roughly what fraction of user requests hit at least one slow leaf?",
+    "options": [
+      "About 1%",
+      "About 40%",
+      "About 50%",
+      "About 5%"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["tail-latency", "basics"]
+    "answer": 1,
+    "explanation": "The chance that all 50 leaves are fast is 0.99 to the 50th power, about 0.605, so about 40% of requests hit a slow leaf. 50% is the tempting shortcut of adding 1% fifty times, which overstates the result because it counts cases with several slow leaves more than once.",
+    "tags": [
+      "tail-latency",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "tail-latency-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Tail Latency, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "tail-latency-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Hedging too eagerly",
+    "section": "Hedged requests, with numbers",
+    "prompt": "To cut its tail, a team sends every read to two replicas at once and uses whichever answers first. Compared with hedging after the p95 latency, what is the risk?",
+    "options": [
+      "None, because the loser is cancelled before it uses any resources",
+      "Reads may come back stale, because replicas lag and hedging picks the slower one",
+      "Load roughly doubles, which can deepen queues and worsen the tail",
+      "The p50 gets worse, because clients wait for both replies before merging"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["tail-latency", "troubleshooting"]
+    "answer": 2,
+    "explanation": "Sending a hedge only after p95 adds at most about 5% extra load, while duplicating every read doubles it and can create the queueing that causes tails. Instant cancellation is the tempting answer, but that is the tied-request design, which needs server cooperation, and even then both copies may start work.",
+    "tags": [
+      "tail-latency",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "tail-latency-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Tail Latency at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "tail-latency-c3",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Fleet p99 from ten servers",
+    "section": "Measuring the tail correctly",
+    "prompt": "Ten servers each report their own p99 latency. How should you compute the p99 for the whole fleet?",
+    "options": [
+      "Take the average of the ten p99 values",
+      "Use the largest of the ten p99 values",
+      "Take the median of the ten p99 values",
+      "Merge the latency histograms, then read off p99"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["tail-latency", "architecture"]
+    "answer": 3,
+    "explanation": "Percentiles cannot be averaged. You need the combined distribution, which is why the lesson records latencies in mergeable histograms such as HdrHistogram. The largest p99 is tempting as a safe upper bound, but it is not the fleet's p99 and can be far from it when servers carry different amounts of traffic.",
+    "tags": [
+      "tail-latency",
+      "recall",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["load-shedding"] = [
   {
-    id: "load-shedding-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Load Shedding?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "load-shedding-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Overload without shedding",
+    "section": "Under the Hood: Graceful Degradation Under Overload",
+    "prompt": "A cluster sized for 100,000 QPS receives 150,000 QPS and does no load shedding. What happens to goodput (successful, on-time responses)?",
+    "options": [
+      "It stays near 100,000, and only the excess 50,000 time out",
+      "It stays near 150,000, with higher latency for every request",
+      "It falls to about 66,000, as capacity is shared across all requests",
+      "It can collapse toward zero, as queueing delays pass client timeouts"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["load-shedding", "basics"]
+    "answer": 3,
+    "explanation": "Without shedding, every request waits in the same growing queue, so nearly all of them finish after their client has given up, and the server stays fully busy doing useless work. \"Only the excess fails\" is the tempting answer, and it is exactly the result that load shedding exists to make true.",
+    "tags": [
+      "load-shedding",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "load-shedding-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Load Shedding, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "load-shedding-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Capacity via Little's law",
+    "section": "Worked example: goodput under overload",
+    "prompt": "A service has 200 worker slots, and each request needs 40 ms of work. What is its capacity, and about how many requests should be in flight at that rate for a 40 ms latency target?",
+    "options": [
+      "5,000 per second, with about 200 in flight",
+      "5,000 per second, with about 5,000 in flight",
+      "8,000 per second, with about 200 in flight",
+      "200 per second, with about 40 in flight"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["load-shedding", "troubleshooting"]
+    "answer": 0,
+    "explanation": "Capacity is 200 divided by 0.04 s, which is 5,000 per second, and Little's law gives 5,000 times 0.04 s, which is 200 requests in flight. Allowing thousands in flight is the tempting mistake: the extra requests only wait in a queue, so a concurrency limit near 200 is what protects latency.",
+    "tags": [
+      "load-shedding",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "load-shedding-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Load Shedding at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "load-shedding-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Shedding the health checks",
+    "section": "Failure modes",
+    "prompt": "During overload, a node's load shedder rejects everything above its limit, including the load balancer's health checks. What happens next?",
+    "options": [
+      "The balancer treats the rejections as a sign of busy nodes and backs off",
+      "The node is marked unhealthy, so its traffic moves to the survivors and overloads them",
+      "Nothing changes, because health checks go through a separate network path",
+      "The node is ejected, but the lower total traffic lets the cluster recover"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["load-shedding", "architecture"]
+    "answer": 1,
+    "explanation": "Failed health checks take the node out of rotation, which pushes its share onto the remaining nodes, which then shed and fail their own checks in turn. That is why health checks must be exempt from shedding. Expecting the cluster to recover is tempting, but removing a node reduces capacity, not the amount of incoming traffic.",
+    "tags": [
+      "load-shedding",
+      "staff",
+      "inline"
+    ]
   }
 ];
-

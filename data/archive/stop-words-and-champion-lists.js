@@ -47,7 +47,7 @@ flowchart TD
 
 ## The losses in one capture
 
-The [Python replay](/course-assets/system-design/m16-search.py) performs both transformations from the [original corpus](/course-assets/system-design/m16-corpus.json). \`original\` and \`pruned\` label separately analyzed document sets. The champion portion prints complete either-term candidates, retained candidates and the result after requiring both query terms.
+The Python replay performs both transformations from the original corpus. \`original\` and \`pruned\` label separately analyzed document sets. The champion portion prints complete either-term candidates, retained candidates and the result after requiring both query terms.
 
 \`\`\`bash title="terminal"
 python3 public/course-assets/system-design/m16-search.py pruning

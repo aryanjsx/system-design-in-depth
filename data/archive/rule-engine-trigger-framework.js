@@ -49,7 +49,7 @@ Rule-set version and event-schema version answer different questions. The schema
 
 ## A versioned replay
 
-The [workflow replay](/course-assets/system-design/m15-workflows.py) stores evaluations and action obligations in a private temporary database; it creates no real review tasks or customer messages.
+The workflow replay stores evaluations and action obligations in a private temporary database; it creates no real review tasks or customer messages.
 
 The evaluation key is event identity plus rule-set version, and the saved canonical input must agree on repeat delivery. \`dispatch\` records the first action obligation. \`audit\` records a new evaluation for comparison without issuing another action. A change of rule set on an ordinary repeat delivery is refused until someone explicitly requests that audit replay.
 

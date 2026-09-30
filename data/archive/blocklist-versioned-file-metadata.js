@@ -65,7 +65,7 @@ The fixture serializes upload, publication and cleanup through SQLite write tran
 
 ## Run the publication boundary
 
-Download [the publication example](/course-assets/system-design/m25-sync.py). The command uses temporary private files and SQLite. The corruption step alters only its own fixture and restores the original bytes before retrying.
+Download the publication example. The command uses temporary private files and SQLite. The corruption step alters only its own fixture and restores the original bytes before retrying.
 
 \`\`\`bash title="terminal"
 uv venv --quiet --allow-existing --python 3.12.12 /tmp/fanout-m25

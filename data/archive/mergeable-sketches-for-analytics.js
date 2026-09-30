@@ -31,7 +31,7 @@ These rules require compatible layouts. The Bloom filter needs the same array le
 
 ## The local merge path
 
-Our [replay](/course-assets/system-design/m18-sketches.py) builds each summary separately for the two partitions, merges them, and compares their retained states against a single pass over the whole stream. It also attempts incompatible merges, which its wrappers explicitly reject. No network transport or distributed coordination is implemented here.
+Our replay builds each summary separately for the two partitions, merges them, and compares their retained states against a single pass over the whole stream. It also attempts incompatible merges, which its wrappers explicitly reject. No network transport or distributed coordination is implemented here.
 
 The diagram separates the observed partition summaries from the external contribution receipts used later in the replay. A receipt identifies a partition already included in a total; it is application state, with a different role from hash registers or shared counters.
 
@@ -99,7 +99,7 @@ A t-digest retains weighted groups of numerical observations, called centroids, 
 
 Our chosen population contains 360 values: 0 through 89 three times each, followed by 100 through 990 in steps of ten. Split it into two disjoint 180-observation partitions. Compare a single build, both merge orders and a repeated right partition.
 
-For this optional package replay, save [the t-digest script](/course-assets/system-design/m18-tdigest.py) and [its pinned requirements](/course-assets/system-design/m18-tdigest-requirements.txt) beside each other. Use Python 3.12 and a new virtual environment:
+For this optional package replay, save the t-digest script and its pinned requirements beside each other. Use Python 3.12 and a new virtual environment:
 
 \`\`\`bash title="terminal"
 python3.12 -m venv .venv-sketch-merge

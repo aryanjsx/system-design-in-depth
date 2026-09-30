@@ -2,715 +2,924 @@ window.QUESTION_BANK = window.QUESTION_BANK || {};
 
 window.QUESTION_BANK["nosql-decision-boundaries"] = [
   {
-    id: "nosql-decision-boundaries-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Nosql Decision Boundaries?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "nosql-decision-boundaries-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Labels vs engines",
+    "section": "Mechanics",
+    "prompt": "A teammate argues: 'We should move to NoSQL because SQL databases use B-trees and NoSQL uses LSM trees, so NoSQL is faster for writes.' What is the core flaw in this reasoning?",
+    "options": [
+      "It is correct in principle, but only MongoDB and Cassandra actually use LSM trees today",
+      "The SQL versus NoSQL label does not determine the storage engine; relational and non-relational products each use B-trees, heaps or LSM trees",
+      "LSM trees are slower for writes than B-trees, so the conclusion is backwards",
+      "Storage engines only affect reads, so they are irrelevant to a write-throughput decision"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["nosql-decision-boundaries", "basics"]
+    "answer": 1,
+    "explanation": "The lesson stresses that SQL versus NoSQL is not B-tree versus LSM: Postgres uses heap tables with indexes, InnoDB a clustered B+ tree, and LSM engines appear on both sides. Saying LSM is slower for writes is wrong; LSM trees generally favour writes, the mistake is tying engine to category.",
+    "tags": [
+      "nosql-decision-boundaries",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "nosql-decision-boundaries-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Nosql Decision Boundaries, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "nosql-decision-boundaries-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Dual-write drift",
+    "section": "Failure mode",
+    "prompt": "A service commits each order to PostgreSQL and then, in application code, indexes the same order into Elasticsearch. After a few weeks, search results are missing some orders and show stale status for others. What is the most robust fix?",
+    "options": [
+      "Write to Elasticsearch first and Postgres second so the search index is never behind",
+      "Wrap both writes in a try/catch and retry the Elasticsearch call up to three times",
+      "Move orders entirely into Elasticsearch so there is only one store to keep consistent",
+      "Make Postgres the source of truth and feed Elasticsearch from its change stream via CDC or a transactional outbox"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["nosql-decision-boundaries", "troubleshooting"]
+    "answer": 3,
+    "explanation": "Two independent writes without a shared transaction drift whenever one succeeds and the other fails or they race; CDC or an outbox derives the second store from committed data. Retries shrink the window but cannot cover crashes between the writes, and reordering the writes just moves the inconsistency.",
+    "tags": [
+      "nosql-decision-boundaries",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "nosql-decision-boundaries-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Nosql Decision Boundaries at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "nosql-decision-boundaries-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Placing device telemetry",
+    "section": "Worked example: one product, three stores",
+    "prompt": "An IoT platform has 2M devices, each sending a 100-byte reading every 10 seconds, and the main query is 'readings for device X over the last 24 hours'. Orders and billing already live in Postgres. Where should telemetry go?",
+    "options": [
+      "A wide-column or time-series store partitioned by (device_id, day), since about 200k append-only writes/s are queried by device and time",
+      "The existing Postgres primary with extra read replicas, since replicas add write capacity",
+      "A wide-column store partitioned by day only, so each day's data is kept together for fast range scans",
+      "A graph database, since each device is related to a customer and a region"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["nosql-decision-boundaries", "architecture"]
+    "answer": 0,
+    "explanation": "2M / 10 s is 200k writes/s, roughly 1.7 TB/day, append-only and read by device and time window, which fits a wide-column or time-series store keyed by (device_id, day). Partitioning by day alone would send all of today's writes to one partition, and read replicas never add write capacity.",
+    "tags": [
+      "nosql-decision-boundaries",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["document-vs-key-value-stores"] = [
   {
-    id: "document-vs-key-value-stores-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Document Vs Key Value Stores?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "document-vs-key-value-stores-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Cost of field awareness",
+    "section": "Mechanics",
+    "prompt": "A document store can filter and index on fields inside a record, while a minimal key-value store treats the value as opaque bytes. What does the document store pay for that capability?",
+    "options": [
+      "It must keep all documents in memory to evaluate predicates",
+      "It cannot support lookups by primary key without a secondary index",
+      "Parsing records and maintaining indexes, which amplifies the cost of each write",
+      "It gives up horizontal scaling because indexes cannot be partitioned"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["document-vs-key-value-stores", "basics"]
+    "answer": 2,
+    "explanation": "Document stores expose fields and indexes inside records and pay parsing and index-maintenance costs, so every extra index adds work to each insert. They still serve primary-key lookups directly; a MongoDB lookup by _id is effectively a key-value access.",
+    "tags": [
+      "document-vs-key-value-stores",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "document-vs-key-value-stores-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Document Vs Key Value Stores, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "document-vs-key-value-stores-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Hand-rolled index drift",
+    "section": "Failure mode",
+    "prompt": "User records live in a key-value store under user_id. To support login by email, the app also writes a separate key email to user_id after saving the user, in two separate calls. Months later a small number of users permanently cannot log in by email. What is the most likely cause?",
+    "options": [
+      "Eventual consistency in a managed secondary index delaying visibility for a few seconds",
+      "A partial failure between the two writes left the hand-maintained email key missing or pointing at an old record",
+      "Hash collisions between email strings and user_id keys overwriting entries",
+      "The key-value store evicting rarely read email keys under memory pressure"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["document-vs-key-value-stores", "troubleshooting"]
+    "answer": 1,
+    "explanation": "The lesson warns that manually maintained secondary structures diverge after a partial write unless both are written transactionally, and that divergence is permanent until repaired. Managed index lag (such as a DynamoDB GSI) is tempting, but it resolves within seconds and would not cause lasting failures.",
+    "tags": [
+      "document-vs-key-value-stores",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "document-vs-key-value-stores-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Document Vs Key Value Stores at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "document-vs-key-value-stores-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Embed or reference",
+    "section": "Worked example: sessions vs product catalog",
+    "prompt": "In MongoDB, a blog post document embeds an array of all its comments. Popular posts receive thousands of comments per day. Following the lesson's modeling rules, what should you change?",
+    "options": [
+      "Keep embedding, but add a multikey index on the comments array to speed up reads",
+      "Keep embedding, but compress the comments array to stay under the size limit",
+      "Move the post and its comments into a single key-value blob to avoid parsing costs",
+      "Store comments in their own collection referencing the post, because they are unbounded and would grow the document towards the 16 MB limit"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["document-vs-key-value-stores", "architecture"]
+    "answer": 3,
+    "explanation": "Embed what is read together and bounded; reference what is unbounded. An ever-growing comments array eventually hits the 16 MB document limit and forces large rewrites on every append, and an index or compression does nothing about that growth.",
+    "tags": [
+      "document-vs-key-value-stores",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["columnar-vs-wide-column-stores"] = [
   {
-    id: "columnar-vs-wide-column-stores-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Columnar Vs Wide Column Stores?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "columnar-vs-wide-column-stores-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Wide-column data model",
+    "section": "Under the Hood: Vectorized OLAP Engines vs. Distributed LSM Tables",
+    "prompt": "Which description best matches how Cassandra or ScyllaDB organises data?",
+    "options": [
+      "Each column is stored in its own compressed file, so queries read only the columns they reference",
+      "Rows are stored in a single global B+ tree ordered by primary key across all nodes",
+      "A distributed map from partition key to a sorted map of clustering key to that row's columns, stored in LSM trees",
+      "A graph of rows linked by pointers so that queries can follow relationships without indexes"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["columnar-vs-wide-column-stores", "basics"]
+    "answer": 2,
+    "explanation": "The lesson describes wide-column stores as a two-dimensional key-value store: partition key mapping to rows sorted by clustering key, held in LSM trees. Storing each column in its own file is the columnar (ClickHouse, Parquet) design, which the shared word 'column' makes easy to confuse.",
+    "tags": [
+      "columnar-vs-wide-column-stores",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "columnar-vs-wide-column-stores-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Columnar Vs Wide Column Stores, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "columnar-vs-wide-column-stores-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Analytics on Cassandra",
+    "section": "Disk Layout: Row-Oriented vs. Pure Columnar",
+    "prompt": "A team runs a nightly SUM(bytes) over every row of a 40-column Cassandra table and finds it takes hours and disturbs production latency. What is the underlying reason?",
+    "options": [
+      "Cassandra keeps each row's columns together, so the job scans every partition across the cluster and reads all columns just to use one",
+      "Cassandra cannot perform aggregations at all, so the driver must retry each partition",
+      "The bytes column is not the clustering key, so Cassandra must sort the whole table first",
+      "Cassandra compresses each column separately, and decompressing 40 files per row is slow"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["columnar-vs-wide-column-stores", "troubleshooting"]
+    "answer": 0,
+    "explanation": "In a row or wide-column layout a row's columns sit together, so an aggregate over one column is a full-cluster scan that reads and discards most bytes, with no column pruning. Separate per-column compression is the columnar layout, which is exactly what makes ClickHouse fast for this query.",
+    "tags": [
+      "columnar-vs-wide-column-stores",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "columnar-vs-wide-column-stores-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Columnar Vs Wide Column Stores at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "columnar-vs-wide-column-stores-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Bytes read for an average",
+    "section": "Why Columnar Storage Wins for Analytics: Vectorization & Compression",
+    "prompt": "Log rows average 500 bytes, of which the latency field is 4 bytes. You compute the average latency over 100M rows. Before any compression, roughly how much less data does a columnar engine read than a row store?",
+    "options": [
+      "About 2x less, because the row store can skip the payload field",
+      "About 10x less, the same as the typical compression ratio",
+      "About 1,000x less, because SIMD processes 16 values per instruction",
+      "About 125x less, since it reads 4 bytes per row instead of 500"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["columnar-vs-wide-column-stores", "architecture"]
+    "answer": 3,
+    "explanation": "The columnar engine reads only the latency column, 4 of 500 bytes per row, a 125x reduction before compression adds more on top. SIMD speeds up processing of the bytes that are read; it does not change how many bytes come off disk.",
+    "tags": [
+      "columnar-vs-wide-column-stores",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["graph-database-decision-boundary"] = [
   {
-    id: "graph-database-decision-boundary-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Graph Database Decision Boundary?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "graph-database-decision-boundary-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "What graph stores avoid",
+    "section": "Mechanics",
+    "prompt": "According to the lesson, what is the real mechanical advantage of a native graph store for multi-hop traversals?",
+    "options": [
+      "Traversals always cost O(log N) regardless of depth because the graph is indexed globally",
+      "Relationships are first-class stored links, so each hop can follow adjacency instead of repeating a global index lookup",
+      "Graph stores shard connected data automatically, so traversals never cross machines",
+      "Graph stores cache every path in advance, so queries read precomputed results"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["graph-database-decision-boundary", "basics"]
+    "answer": 1,
+    "explanation": "Graph stores make relationships first-class and can skip a repeated global index lookup per hop, so cost tracks the part of the graph touched. The lesson explicitly rejects any general O(log N)-style rule and notes that partitioning connected data is hard, not automatic.",
+    "tags": [
+      "graph-database-decision-boundary",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "graph-database-decision-boundary-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Graph Database Decision Boundary, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "graph-database-decision-boundary-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "The public WiFi supernode",
+    "section": "Failure mode",
+    "prompt": "A fraud query finds accounts within 4 hops of a flagged account via shared devices. It usually returns in milliseconds, but sometimes times out. Investigation shows one 'device' is an airport WiFi fingerprint shared by 200k accounts. What is the best mitigation?",
+    "options": [
+      "Migrate from a recursive SQL CTE to a native graph database, which handles high-degree nodes efficiently",
+      "Add more replicas so the traversal can be parallelised across machines",
+      "Cap expansion through very high-degree nodes, for example by filtering or special-casing them, since they explode the traversal and carry little fraud signal",
+      "Increase the timeout, since the query is correct and only occasionally slow"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["graph-database-decision-boundary", "troubleshooting"]
+    "answer": 2,
+    "explanation": "A supernode turns one hop into a 200k-edge expansion that exhausts any latency budget, in any engine; the lesson's fix is to cap degree, filter by edge type or time, or special-case such nodes. Switching to a graph database does not help, because following 200k pointers is still 200k expansions.",
+    "tags": [
+      "graph-database-decision-boundary",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "graph-database-decision-boundary-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Graph Database Decision Boundary at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "graph-database-decision-boundary-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Is SQL enough here",
+    "section": "Worked example: fraud ring detection",
+    "prompt": "Accounts have an average degree of about 5 with no supernodes. A 4-hop expansion in Postgres costs about 4 B-tree page touches per expanded node. What does the lesson conclude about running this in SQL?",
+    "options": [
+      "About 2,500 page touches, a few milliseconds when cached, so SQL is fine for this shape",
+      "About 20 page touches, so any database is fast and the choice does not matter",
+      "About 390,000 page touches, so a graph database is required",
+      "Several million page touches, because every hop scans the full edges table"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["graph-database-decision-boundary", "architecture"]
+    "answer": 0,
+    "explanation": "5^4 is about 625 nodes at about 4 page touches each, roughly 2,500 touches and a few milliseconds when cached. Graph databases start to pay off for deeper, variable-length paths, cycles and pattern matching, not for a bounded, indexed 4-hop expansion like this one.",
+    "tags": [
+      "graph-database-decision-boundary",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["sharding-and-partitioning"] = [
   {
-    id: "sharding-and-partitioning-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Sharding And Partitioning?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "sharding-and-partitioning-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Range vs hash trade",
+    "section": "Mechanics",
+    "prompt": "You partition an orders table by an auto-increment order_id. What is the key difference between range and hash partitioning for this key?",
+    "options": [
+      "Range partitioning spreads new orders evenly but makes lookups by order_id scatter to all shards",
+      "Both behave the same for integer keys; only string keys cause differences",
+      "Hash partitioning keeps recent orders together, which makes it the better choice for time-ordered scans",
+      "Range partitioning keeps scans over consecutive IDs cheap but sends every new write to the last range; hashing spreads writes but scatters range scans"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["sharding-and-partitioning", "basics"]
+    "answer": 3,
+    "explanation": "Range partitioning preserves scan locality but a monotonic key concentrates all new inserts on the newest range; hashing distributes writes at the cost of turning range scans into scatter-gather. Hashing does not keep recent orders together; it deliberately scatters them.",
+    "tags": [
+      "sharding-and-partitioning",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "sharding-and-partitioning-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Sharding And Partitioning, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "sharding-and-partitioning-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Rebalance cutover",
+    "section": "Failure mode",
+    "prompt": "You are moving logical shard 417 from cluster 3 to cluster 9 using CDC. Some app servers will pick up the new directory entry seconds later than others. What is the main risk during cutover, and how do you avoid it?",
+    "options": [
+      "CDC will duplicate every row in shard 417; deduplicate by primary key after cutover",
+      "Some writes land on the old cluster after the copy is considered complete; briefly block writes to the shard, let CDC drain, then flip the directory",
+      "Reads on cluster 9 will be slower until its buffer pool warms; pre-warm it with a scan",
+      "Hash values for tenants in shard 417 will change; rehash those tenants after the move"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["sharding-and-partitioning", "troubleshooting"]
+    "answer": 1,
+    "explanation": "The lesson warns that rebalancing is risky while old and new routers disagree: stale routers can keep writing to the old location, and those writes are lost or diverge. Nothing is rehashed in a logical-shard design, since only the logical-to-physical mapping changes.",
+    "tags": [
+      "sharding-and-partitioning",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "sharding-and-partitioning-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Sharding And Partitioning at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "sharding-and-partitioning-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Doubling the clusters",
+    "section": "Worked example: sharding a multi-tenant SaaS",
+    "prompt": "Tenants map to 1,024 logical shards via hash(tenant_id) mod 1024, spread evenly over 8 physical clusters. You grow to 16 clusters. What has to move?",
+    "options": [
+      "64 logical shards off each existing cluster, with no tenant rehashed; only directory entries change",
+      "Every row, because the mod divisor changes from 8 to 16",
+      "About half of the rows in every logical shard, split by the new hash",
+      "Only the largest tenant, which is pinned to its own cluster"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["sharding-and-partitioning", "architecture"]
+    "answer": 0,
+    "explanation": "Each cluster holds 128 logical shards; to reach 16 clusters it hands off 64 whole logical shards and the directory is updated. The hash is always mod 1024 over logical shards, so changing the physical cluster count never rehashes rows.",
+    "tags": [
+      "sharding-and-partitioning",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["hot-partitions"] = [
   {
-    id: "hot-partitions-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Hot Partitions?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "hot-partitions-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why hashing cannot help",
+    "section": "The Anatomy of a Hotspot: When Hashing Fails",
+    "prompt": "A cluster uses a well-distributed hash on product_id, yet during a flash sale one shard saturates while others idle. Why did hashing not prevent this?",
+    "options": [
+      "The hash function had too few output bits for the number of products",
+      "Hashing is only uniform once the cluster has at least 100 nodes",
+      "Hashing spreads keys evenly, but all traffic for one popular key still goes to the single shard that owns it",
+      "The shard's replicas were out of sync, so all reads fell back to the primary"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["hot-partitions", "basics"]
+    "answer": 2,
+    "explanation": "Hash partitioning assumes keys are accessed uniformly; with Zipf-like popularity, one hot key concentrates load on its owning shard. No hash function or node count can split traffic to a single key, which is why salting or caching is needed.",
+    "tags": [
+      "hot-partitions",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "hot-partitions-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Hot Partitions, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "hot-partitions-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Near-cache load maths",
+    "section": "Production Mitigation Patterns",
+    "prompt": "A hot configuration key receives 500,000 reads/s spread across 200 API instances. Each instance adds an in-process L1 cache with a 2-second TTL and single-flight refresh. Roughly how many reads/s now reach Redis for that key?",
+    "options": [
+      "About 250,000, since the cache halves the traffic",
+      "About 2,500, since each instance still misses about 1 percent of the time",
+      "About 5,000, one per instance per 40 ms",
+      "About 100, one refresh per instance every 2 seconds"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["hot-partitions", "troubleshooting"]
+    "answer": 3,
+    "explanation": "With single-flight, each of 200 instances refreshes the key once per 2 s TTL, so about 100 reads/s reach Redis regardless of request volume. Miss rate is not a fixed percentage here; it depends on TTL and instance count, not on incoming traffic.",
+    "tags": [
+      "hot-partitions",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "hot-partitions-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Hot Partitions at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "hot-partitions-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Salting an inventory count",
+    "section": "Worked example: a viral like counter",
+    "prompt": "Salting a like counter across K = 32 sub-keys worked well, so a team applies the same pattern to a flash-sale inventory counter that must never oversell. What breaks?",
+    "options": [
+      "Summing 32 sub-keys is not atomic, so a reader can see a total that never existed and two buyers can both pass a stock check; use a reservation or queue instead",
+      "Nothing breaks, since the sum of the sub-keys is always exact once all reads complete",
+      "DynamoDB rejects items whose keys contain a salt suffix for conditional writes",
+      "Write throughput drops, because each decrement must now update all 32 sub-keys"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["hot-partitions", "architecture"]
+    "answer": 0,
+    "explanation": "The lesson notes that a scatter-gather sum is not a snapshot, which is fine for likes but wrong for inventory that must never oversell. Each write still touches only one sub-key, so write throughput is not the problem; correctness of the check is.",
+    "tags": [
+      "hot-partitions",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["consistent-hashing"] = [
   {
-    id: "consistent-hashing-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Consistent Hashing?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "consistent-hashing-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Role of virtual nodes",
+    "section": "Mechanics",
+    "prompt": "In consistent hashing, why do systems place many weighted virtual nodes per physical server on the ring?",
+    "options": [
+      "To guarantee that every server owns exactly the same number of keys",
+      "To reduce expected load skew between servers and allow capacity weighting, without guaranteeing perfect balance",
+      "To spread traffic for a single hot key across several servers",
+      "To eliminate the need to distribute membership changes to clients"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["consistent-hashing", "basics"]
+    "answer": 1,
+    "explanation": "Virtual nodes shrink the expected spread of ownership (the standard deviation of load is roughly proportional to 1 over the square root of V) and let bigger servers take more points, but they do not guarantee a fixed balance. A single key still maps to one position, so vnodes do nothing for hot keys.",
+    "tags": [
+      "consistent-hashing",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "consistent-hashing-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Consistent Hashing, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "consistent-hashing-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Still one hot node",
+    "section": "Failure mode",
+    "prompt": "After moving a cache fleet to consistent hashing with 256 vnodes per server, key counts per node are within 10 percent, but one node still runs at 100 percent CPU during peaks. What is the most likely explanation?",
+    "options": [
+      "256 vnodes is too few; raising it to 1,024 will even out CPU",
+      "Clients have stale membership views and send all keys to that node",
+      "A small number of very hot keys live on that node; consistent hashing balances keys, not traffic to a key",
+      "The node's ring position is at hash zero, which receives all wrapped-around lookups"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["consistent-hashing", "troubleshooting"]
+    "answer": 2,
+    "explanation": "Balanced key counts with one saturated node is the signature of hot keys, which consistent hashing cannot split. Stale membership views cause misrouting and misses, but would not leave key counts balanced while pinning CPU on one node.",
+    "tags": [
+      "consistent-hashing",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "consistent-hashing-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Consistent Hashing at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "consistent-hashing-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Modulo remap cost",
+    "section": "Worked example: modulo vs ring when adding a cache node",
+    "prompt": "A cache holds 10M keys on 10 nodes using hash(key) mod N. You add an 11th node. Roughly what happens to the hit rate immediately afterwards?",
+    "options": [
+      "It drops by about 9 points, because the new node takes about 1/11 of keys",
+      "It is unchanged, because existing keys stay on their original nodes",
+      "It drops by about half, because half the keys change parity",
+      "It collapses to about 9 percent, because about 91 percent of keys map to a different node"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["consistent-hashing", "architecture"]
+    "answer": 3,
+    "explanation": "A key stays put only when h mod 10 equals h mod 11, about 1 in 11 keys, so roughly 91 percent move and the hit rate falls to about 9 percent. The 9-point dip is what consistent hashing would give, not modulo.",
+    "tags": [
+      "consistent-hashing",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["distributed-id-generation"] = [
   {
-    id: "distributed-id-generation-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Distributed Id Generation?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "distributed-id-generation-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "What IDs leak",
+    "section": "The Distributed Identifier Challenge",
+    "prompt": "A product team switches public order IDs from auto-increment integers to Snowflake IDs to stop competitors estimating order volume. What do Snowflake IDs still reveal?",
+    "options": [
+      "The creation timestamp of each record",
+      "Nothing, since Snowflake IDs are indistinguishable from random numbers",
+      "The customer's region, because the worker ID encodes geography",
+      "The exact number of orders placed so far"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["distributed-id-generation", "basics"]
+    "answer": 0,
+    "explanation": "Time-ordered IDs such as Snowflake and UUIDv7 embed the creation timestamp, which anyone can decode. They no longer expose a global running count, but they are not opaque; expose a separate random public ID if timing must stay private.",
+    "tags": [
+      "distributed-id-generation",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "distributed-id-generation-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Distributed Id Generation, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "distributed-id-generation-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Ticket server cost",
+    "section": "Core Approaches to Distributed ID Generation",
+    "prompt": "You adopt a Flickr-style central ticket server that issues each ID with one REPLACE INTO round trip. Order creation runs at 30,000 per second from many services. What is the main concern?",
+    "options": [
+      "IDs will collide because REPLACE INTO is not atomic",
+      "IDs will be 128 bits, doubling index size",
+      "Every ID costs a network round trip to one database, which is both a throughput ceiling and a single point of failure",
+      "IDs will be randomly ordered and fragment B-tree indexes"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["distributed-id-generation", "troubleshooting"]
+    "answer": 2,
+    "explanation": "A central ticket service concentrates every ID request on one database, so it caps throughput and makes ID generation a single point of failure; Flickr mitigated this by running two servers with odd and even sequences. The IDs themselves are sequential 64-bit integers, so fragmentation and size are not the issue.",
+    "tags": [
+      "distributed-id-generation",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "distributed-id-generation-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Distributed Id Generation at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "distributed-id-generation-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "UUIDv4 clustered key",
+    "section": "Detailed Trade-offs of Generation Patterns",
+    "prompt": "A MySQL InnoDB table uses UUIDv4 as its clustered primary key. As the table grows past RAM, insert throughput falls sharply. What is the mechanism?",
+    "options": [
+      "UUIDv4 generation requires a network call that becomes a bottleneck at scale",
+      "Random keys land on random leaf pages, causing page splits and buffer-pool misses because inserts no longer append to the right-hand edge",
+      "UUIDv4 values collide more often as the table grows, forcing retries",
+      "InnoDB stores UUIDs as 36-character strings, so each insert writes 36 bytes"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["distributed-id-generation", "architecture"]
+    "answer": 1,
+    "explanation": "Random 128-bit keys scatter inserts across the whole B-tree, so pages split and must be read from disk once the working set exceeds RAM. UUIDv4 generation is local with no coordination, and collision probability stays negligible.",
+    "tags": [
+      "distributed-id-generation",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["uuid-objectid-and-snowflake"] = [
   {
-    id: "uuid-objectid-and-snowflake-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Uuid Objectid And Snowflake?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "uuid-objectid-and-snowflake-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why UUIDv7 indexes well",
+    "section": "Byte-Level Anatomical Breakdown of Distributed IDs",
+    "prompt": "What makes UUIDv7 index-friendly compared with UUIDv4, while keeping the same 128-bit size?",
+    "options": [
+      "It replaces the random bits with a per-machine counter",
+      "It uses a CSPRNG, so values are spread evenly across the index",
+      "It shortens the value to 64 bits so it fits in a BIGINT",
+      "It puts a 48-bit Unix millisecond timestamp in the highest-order bits, so new IDs sort after older ones"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["uuid-objectid-and-snowflake", "basics"]
+    "answer": 3,
+    "explanation": "UUIDv7 leads with a 48-bit millisecond timestamp followed by random bits, so inserts append near the end of the index. It stays 128 bits and keeps plenty of randomness; it is Snowflake, not UUIDv7, that fits in 64 bits.",
+    "tags": [
+      "uuid-objectid-and-snowflake",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "uuid-objectid-and-snowflake-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Uuid Objectid And Snowflake, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "uuid-objectid-and-snowflake-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "ObjectId sort within a second",
+    "section": "Byte-Level Anatomical Breakdown of Distributed IDs",
+    "prompt": "Two MongoDB processes each insert documents during the same wall-clock second. You sort the documents by _id. How are documents from that second ordered?",
+    "options": [
+      "Exactly by creation time, because the counter is global across processes",
+      "By the 5-byte process value and then the counter, not by true creation order, because the timestamp has only 1-second resolution",
+      "Randomly, because ObjectIds are generated from random bits",
+      "By the 3-byte counter first, because it occupies the most significant bytes"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["uuid-objectid-and-snowflake", "troubleshooting"]
+    "answer": 1,
+    "explanation": "An ObjectId is 4 bytes of seconds, then a 5-byte per-process value, then a 3-byte counter, so within one second the process value decides the order. The counter is per process and sits in the least significant bytes, so it does not give a global creation order.",
+    "tags": [
+      "uuid-objectid-and-snowflake",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "uuid-objectid-and-snowflake-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Uuid Objectid And Snowflake at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "uuid-objectid-and-snowflake-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Engine matters for UUIDv4",
+    "section": "Bitwise Memory & Index Performance Comparison",
+    "prompt": "The same insert-heavy service is deployed with a UUIDv4 primary key on MySQL InnoDB and on PostgreSQL. Why does the lesson expect InnoDB to suffer more?",
+    "options": [
+      "InnoDB clusters the table itself on the primary key, so random keys scatter the rows, while Postgres stores rows in a heap and only the index suffers",
+      "PostgreSQL converts UUIDv4 values to UUIDv7 internally",
+      "InnoDB stores UUIDs as text, while Postgres always uses a native 16-byte type",
+      "PostgreSQL does not build an index on UUID primary keys"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["uuid-objectid-and-snowflake", "architecture"]
+    "answer": 0,
+    "explanation": "In InnoDB the primary key is the clustered index, so random keys cause page splits in the table itself and bloat every secondary index that copies the key. Postgres has a separate heap, so random keys fragment only the primary-key index; it does index them and does not rewrite them.",
+    "tags": [
+      "uuid-objectid-and-snowflake",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["snowflake-id-design"] = [
   {
-    id: "snowflake-id-design-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Snowflake Id Design?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "snowflake-id-design-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Thread-safe generator",
+    "section": "Mechanics",
+    "prompt": "A Snowflake generator runs in a multi-threaded service. What must be true of its (last_ts, sequence) state?",
+    "options": [
+      "Each thread keeps its own copy, since the worker ID already guarantees uniqueness",
+      "It must be persisted to disk on every ID so restarts cannot repeat values",
+      "It must be updated atomically, for example with a mutex, a CAS on packed state, or a single owning thread",
+      "It only needs to be read atomically; writes can be unsynchronised"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["snowflake-id-design", "basics"]
+    "answer": 2,
+    "explanation": "Concurrent callers must see the timestamp and sequence change together, otherwise two threads can compose the same ID in one millisecond. Per-thread copies share one worker ID, so they would produce duplicates; persisting on every ID is unnecessary, as a periodic high-water mark is enough for restarts.",
+    "tags": [
+      "snowflake-id-design",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "snowflake-id-design-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Snowflake Id Design, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "snowflake-id-design-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Recipe for duplicates",
+    "section": "Failure mode",
+    "prompt": "Which combination of events is most likely to produce duplicate Snowflake IDs in production?",
+    "options": [
+      "Two workers with different IDs generating 4,096 IDs in the same millisecond",
+      "A worker exhausting its sequence and spinning until the next millisecond",
+      "IDs from different workers interleaving within the clock-skew window",
+      "A VM resuming with an older clock while its worker ID has been reassigned to another live process"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["snowflake-id-design", "troubleshooting"]
+    "answer": 3,
+    "explanation": "Uniqueness rests on two invariants, unique live worker IDs and a timestamp that never goes backwards; breaking both lets two generators emit the same time, worker and sequence triple. Interleaving across workers only weakens ordering, and sequence exhaustion only adds a short delay.",
+    "tags": [
+      "snowflake-id-design",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "snowflake-id-design-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Snowflake Id Design at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "snowflake-id-design-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Re-splitting the bits",
+    "section": "Worked example: the numbers behind the 64 bits",
+    "prompt": "Your system will never need more than 64 generators, but each must handle bursts of 50,000 IDs in one millisecond. Keeping 1 sign bit and 41 timestamp bits, which split of the remaining 22 bits fits?",
+    "options": [
+      "6 worker bits and 16 sequence bits",
+      "10 worker bits and 12 sequence bits",
+      "8 worker bits and 14 sequence bits",
+      "4 worker bits and 18 sequence bits"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["snowflake-id-design", "architecture"]
+    "answer": 0,
+    "explanation": "6 bits give exactly 64 workers and 16 bits give 65,536 IDs per ms, covering the 50k burst. 14 sequence bits allow only 16,384 per ms, the default 12 only 4,096, and 4 worker bits allow only 16 generators.",
+    "tags": [
+      "snowflake-id-design",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["clock-skew-and-id-ordering"] = [
   {
-    id: "clock-skew-and-id-ordering-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Clock Skew And Id Ordering?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "clock-skew-and-id-ordering-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "LWW with skewed clocks",
+    "section": "Why Physical Clocks Lie in Distributed Systems",
+    "prompt": "Node A writes X, then sends a message that causes node B to write Y to the same key. B's clock is 40 ms behind A's. With last-write-wins by wall-clock timestamp, what can happen?",
+    "options": [
+      "Y wins, because it was written later in real time",
+      "The database detects the conflict and keeps both versions",
+      "Y is stamped earlier than X, so X silently wins and the causally later write Y is lost",
+      "NTP corrects B's clock before the write, so ordering is preserved"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["clock-skew-and-id-ordering", "basics"]
+    "answer": 2,
+    "explanation": "Physical timestamps cannot guarantee causality; with skew, the later write can carry a smaller timestamp and LWW discards it without any error. LWW does not keep siblings, and NTP residual error persists between syncs, so it cannot be relied on to fix ordering.",
+    "tags": [
+      "clock-skew-and-id-ordering",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "clock-skew-and-id-ordering-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Clock Skew And Id Ordering, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "clock-skew-and-id-ordering-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "When epsilon grows",
+    "section": "Google Spanner's TrueTime API: Bounding Uncertainty",
+    "prompt": "In a Spanner-like system, TrueTime's uncertainty epsilon rises from about 4 ms to 20 ms because time masters become hard to reach. What is the main effect?",
+    "options": [
+      "Commit wait grows with epsilon, so write latency rises but ordering guarantees are preserved",
+      "Transactions may commit out of real-time order until epsilon shrinks again",
+      "Reads start failing because timestamps are no longer unique",
+      "Nothing changes, because commit wait uses a fixed 7 ms delay"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["clock-skew-and-id-ordering", "troubleshooting"]
+    "answer": 0,
+    "explanation": "Commit wait holds a transaction until its timestamp is guaranteed to be in the past, so the wait scales with epsilon and larger uncertainty costs latency, not correctness. Out-of-order commits would only happen if the system ignored the interval, which is exactly what commit wait prevents.",
+    "tags": [
+      "clock-skew-and-id-ordering",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "clock-skew-and-id-ordering-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Clock Skew And Id Ordering at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "clock-skew-and-id-ordering-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Comparing vector clocks",
+    "section": "Under the Hood: Lamport Timestamps & Vector Clocks",
+    "prompt": "A Dynamo-style store holds two versions of a cart with vector clocks VA = [2, 1, 0] and VB = [1, 2, 0]. What should the system conclude?",
+    "options": [
+      "VB is newer because its largest component is on a later node",
+      "VA is newer because it has the larger first component",
+      "They are identical, because both sum to 3",
+      "They are concurrent, since each has a component greater than the other, so both must be kept and merged"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["clock-skew-and-id-ordering", "architecture"]
+    "answer": 3,
+    "explanation": "VA is ahead in the first component and VB in the second, so neither causally precedes the other and the updates conflict. Picking by any single component or by the sum would silently drop one user's change, which is what vector clocks exist to prevent.",
+    "tags": [
+      "clock-skew-and-id-ordering",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["keyset-pagination"] = [
   {
-    id: "keyset-pagination-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Keyset Pagination?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "keyset-pagination-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why the tie-breaker",
+    "section": "Mechanics",
+    "prompt": "An API pages orders with ORDER BY created_at DESC and a cursor holding only the last created_at. Why must the cursor also include id?",
+    "options": [
+      "Without it the database cannot use the index on created_at",
+      "Rows sharing the same created_at would be skipped or repeated at page boundaries, because the order is not unique",
+      "The id makes the cursor harder for clients to forge",
+      "Including id makes each page seek O(1) instead of O(log N)"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["keyset-pagination", "basics"]
+    "answer": 1,
+    "explanation": "Keyset pagination needs a unique, deterministic order; with ties on created_at the cursor cannot say where within the tie to resume. Opaque encoding and signing, not the id itself, protect against forged cursors, and the seek remains roughly O(log N) either way.",
+    "tags": [
+      "keyset-pagination",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "keyset-pagination-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Keyset Pagination, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "keyset-pagination-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Paging by updated_at",
+    "section": "Failure mode",
+    "prompt": "A sync client pages through tickets with keyset pagination on (updated_at, id) ascending. Agents edit tickets constantly while the client pages. What can go wrong?",
+    "options": [
+      "Nothing, because keyset pagination is fully stable under concurrent writes",
+      "The index seek degrades to a full scan once rows are updated",
+      "A ticket updated mid-scan moves past the cursor and can appear again on a later page, while its old position is gone",
+      "The client receives a database error when the cursor row is modified"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["keyset-pagination", "troubleshooting"]
+    "answer": 2,
+    "explanation": "Keyset pagination handles inserts ahead of the cursor well, but updating the sort key moves rows within the order, so they can reappear later (and deletions of unseen rows change results). The index seek itself is unaffected; this is a semantics problem, not a performance one.",
+    "tags": [
+      "keyset-pagination",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "keyset-pagination-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Keyset Pagination at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "keyset-pagination-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Expanding the tuple",
+    "section": "Worked example: page 5,000 of an orders feed",
+    "prompt": "On MySQL you must expand the row comparison (created_at, id) less than (:ts, :id) by hand. Which WHERE clause is equivalent?",
+    "options": [
+      "created_at ≤ :ts AND id less than :id",
+      "created_at less than :ts AND id less than :id",
+      "created_at less than :ts OR id less than :id",
+      "created_at less than :ts OR (created_at = :ts AND id less than :id)"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["keyset-pagination", "architecture"]
+    "answer": 3,
+    "explanation": "Tuple comparison means an earlier created_at, or the same created_at with a smaller id. The tempting created_at ≤ :ts AND id less than :id wrongly drops older rows whose id happens to be larger than :id.",
+    "tags": [
+      "keyset-pagination",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["bloom-filters"] = [
   {
-    id: "bloom-filters-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Bloom Filters?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "bloom-filters-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Reading a Bloom answer",
+    "section": "Mechanics",
+    "prompt": "A lookup checks a key against a correctly built, current Bloom filter and finds all k bits set. What can you conclude?",
+    "options": [
+      "The key was probably inserted, but you must check the underlying data to be sure",
+      "The key was definitely inserted",
+      "The key was definitely not inserted",
+      "The filter is saturated and must be rebuilt"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["bloom-filters", "basics"]
+    "answer": 0,
+    "explanation": "All bits set means 'maybe present', because other keys may have set those bits, so a false positive is possible. Only an unset bit gives a certain answer, and that answer is 'definitely not present'.",
+    "tags": [
+      "bloom-filters",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "bloom-filters-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Bloom Filters, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "bloom-filters-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Deleting from a filter",
+    "section": "Failure mode",
+    "prompt": "To support deletes, an engineer clears a key's k bits when the key is removed from a standard Bloom filter. What failure does this introduce?",
+    "options": [
+      "The false-positive rate rises for all keys",
+      "Lookups become slower because more bits must be checked",
+      "Other keys sharing those bits start returning 'definitely not present', creating false negatives",
+      "The filter can no longer accept new inserts"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["bloom-filters", "troubleshooting"]
+    "answer": 2,
+    "explanation": "Bits are shared between keys, so clearing them can make present keys look absent, which breaks the filter's one guarantee. Clearing bits actually lowers the false-positive rate; use a counting or cuckoo filter, or rebuild, if you need deletes.",
+    "tags": [
+      "bloom-filters",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "bloom-filters-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Bloom Filters at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "bloom-filters-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Cost of fewer false positives",
+    "section": "Worked example: sizing a filter",
+    "prompt": "A filter for 100M keys at a 1 percent false-positive rate uses about 120 MB. You want 0.1 percent instead. Roughly how much extra memory does that cost?",
+    "options": [
+      "About 1.08 GB, because 10x fewer false positives needs 10x the bits",
+      "About 60 MB, since each 10x reduction costs about 4.8 more bits per item",
+      "About 12 MB, since only a few extra hash functions are needed",
+      "About 600 MB, because bits scale with the square of the precision"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["bloom-filters", "architecture"]
+    "answer": 1,
+    "explanation": "Bits per item grow with ln(1/p), so each 10x cut in false positives adds about 4.8 bits per item, taking 9.6 to 14.4 bits, or about 60 MB more for 100M keys. Memory grows logarithmically, not linearly, with the reduction in false positives.",
+    "tags": [
+      "bloom-filters",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["hot-cold-storage-archival"] = [
   {
-    id: "hot-cold-storage-archival-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which statement best describes the primary goal of Hot Cold Storage Archival?",
-    scenario: "You are explaining core concepts to a junior engineer.",
-    options: [
-      "It focuses entirely on database selection.",
-      "It establishes fundamental principles and constraints to guide the design process.",
-      "It generates the final source code automatically.",
-      "It solely concerns the user interface design."
+    "id": "hot-cold-storage-archival-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Setting tier boundaries",
+    "section": "Under the Hood: The Economics and Hardware of Data Lifecycles",
+    "prompt": "What should decide when records move from the hot tier to cheaper tiers?",
+    "options": [
+      "A fixed industry rule of 30, 90 and 365 days",
+      "Whatever the cheapest storage class allows as a minimum duration",
+      "The size of the hot cluster's disks, moving data only when they fill",
+      "Your measured access pattern by data age, together with retention and compliance rules"
     ],
-    answer: 1,
-    explanation: "B is correct because it identifies the core purpose. A is wrong because it's too narrow. C is wrong as it does not generate code. D is wrong because system design is typically backend/architecture focused.",
-    tags: ["hot-cold-storage-archival", "basics"]
+    "answer": 3,
+    "explanation": "The lesson says reads often concentrate on recent data but tells you to measure your own access pattern before choosing boundaries. The 30/90/365 figures in the diagram are an example lifecycle, not a rule, and waiting for disks to fill wastes expensive capacity.",
+    "tags": [
+      "hot-cold-storage-archival",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "hot-cold-storage-archival-q2",
-    type: "multi",
-    difficulty: "apply",
-    prompt: "In a scenario involving Hot Cold Storage Archival, you notice high latency during peak hours. Which of the following are valid approaches to address this?",
-    scenario: "A high-traffic e-commerce platform is experiencing slow responses.",
-    options: [
-      "Add more database indexes blindly.",
-      "Measure and identify the bottleneck.",
-      "Implement caching for read-heavy operations.",
-      "Cache all responses regardless of staleness."
+    "id": "hot-cold-storage-archival-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "One-hour retrieval SLA",
+    "section": "Hardware, Latency, and Cost Breakdown",
+    "prompt": "Audit records must be kept for 7 years and are rarely read, but any record must be retrievable within 1 hour when a regulator asks. Which tier is the cheapest that reliably meets the SLA?",
+    "options": [
+      "Glacier Deep Archive, at about $0.99 per TB-month",
+      "Glacier Instant Retrieval, which returns objects in milliseconds",
+      "Glacier Flexible Retrieval with Standard retrieval",
+      "Hot NVMe storage in the primary database"
     ],
-    answer: [1, 2],
-    explanation: "Options B and C are correct because measuring is essential and caching can help reads. A is wrong as blind indexes hurt writes. D is wrong because staleness can break correctness.",
-    tags: ["hot-cold-storage-archival", "troubleshooting"]
+    "answer": 1,
+    "explanation": "Deep Archive takes 12 to 48 hours and Flexible Retrieval Standard takes 3 to 5 hours, so both miss a 1-hour SLA despite being cheaper. Instant Retrieval meets it at a small fraction of hot NVMe cost.",
+    "tags": [
+      "hot-cold-storage-archival",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "hot-cold-storage-archival-q3",
-    type: "ordering",
-    difficulty: "staff",
-    prompt: "Order the standard steps for evaluating tradeoffs for Hot Cold Storage Archival at scale:",
-    scenario: "Designing a system expected to grow 10x over the next 3 years.",
-    options: [
-      "Define non-functional requirements",
-      "Identify the single points of failure",
-      "Propose alternative architectures",
-      "Measure actual bottlenecks"
+    "id": "hot-cold-storage-archival-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Archiving tombstones",
+    "section": "Tombstones and Lifecycle Compaction",
+    "prompt": "A job exports Cassandra tables straight to Parquet in S3 without compacting first. Analysts querying the archive with Athena complain of slow queries. What is the likely cause?",
+    "options": [
+      "The export carried tombstones for deletes and expired TTLs, so the archive holds dead markers the engine must read and filter",
+      "Parquet cannot store data exported from LSM-tree databases efficiently",
+      "Athena cannot read files written by Cassandra's export tool without conversion",
+      "S3 Standard adds 12 to 48 hours of latency to the first read"
     ],
-    answer: [0, 2, 1, 3],
-    explanation: "Requirements must come first (A). Then proposing alternatives (C). Finding single points of failure helps refine those (B), and measuring validates them (D).",
-    tags: ["hot-cold-storage-archival", "architecture"]
+    "answer": 0,
+    "explanation": "Deletes, expired TTLs and null writes leave tombstones, and exporting without compaction copies that dead data into the archive, slowing every scan. Parquet and Athena work fine on compacted data; the 12 to 48 hour latency belongs to Deep Archive, not S3 Standard.",
+    "tags": [
+      "hot-cold-storage-archival",
+      "staff",
+      "inline"
+    ]
   }
 ];
-

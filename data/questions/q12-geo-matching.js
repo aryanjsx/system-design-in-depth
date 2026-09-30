@@ -2,408 +2,528 @@ window.QUESTION_BANK = window.QUESTION_BANK || {};
 
 window.QUESTION_BANK["nearby-geospatial-search-system-design"] = [
   {
-    id: "nearby-geospatial-search-system-design-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Geospatial indexing in this context?",
-    scenario: "You are designing the system and need to justify the use of Geospatial indexing.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "nearby-geospatial-search-system-design-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Candidates are not answers",
+    "section": "Understanding Nearby Geospatial Search",
+    "prompt": "A courier search for \"within 3 km\" fetches candidates from the spatial index cells covering the circle. One courier sits inside a covered cell, 2.1 km away, but last reported location five minutes ago. According to the lesson, what should happen to that courier?",
+    "options": [
+      "Return it, because the index already proved it lies inside the covering",
+      "Return it ranked last, because distance is the only hard filter after the index",
+      "Drop it only if its cell is a neighbour cell rather than the centre cell",
+      "Drop it in the exact filter step, because a stale location fails the freshness cutoff"
     ],
-    answer: 1,
-    explanation: "Geospatial indexing provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "geospatial indexing"]
+    "answer": 3,
+    "explanation": "The index only generates a bounded candidate set; the exact step then filters by geodesic distance, availability, permissions and a freshness cutoff, so geometric closeness does not make a stale courier eligible. Treating the covering as proof is the classic mistake, since cells over-cover the circle and say nothing about freshness.",
+    "tags": [
+      "nearby-geospatial-search-system-design",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "nearby-geospatial-search-system-design-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Quadtrees, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Quadtrees component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "nearby-geospatial-search-system-design-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Covering size and hit rate",
+    "section": "Worked example: sizing a covering",
+    "prompt": "Using the lesson's San Francisco example (2 km radius, precision 5 covering about 171 square km with 9 cells, precision 6 covering about 29 square km with 48 cells), suppose density is 200 places per square km. Roughly how many candidates does each covering return, and how many are real hits?",
+    "options": [
+      "Precision 5 about 3,400 and precision 6 about 580, with about 250 real hits",
+      "Precision 5 about 34,000 and precision 6 about 5,800, with about 2,500 real hits",
+      "Precision 5 about 34,000 and precision 6 about 5,800, with all 5,800 at precision 6 being real hits",
+      "Both about 2,500, because the covering choice does not change the candidate count"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "quadtrees"]
+    "answer": 1,
+    "explanation": "171 x 200 is about 34,000 and 29 x 200 about 5,800, while the circle is only 12.6 square km, so about 2,500 places are truly within 2 km either way. Assuming every precision 6 candidate is a hit is tempting because the cells are small, but the covering still over-covers the circle, so the exact distance check is always needed.",
+    "tags": [
+      "nearby-geospatial-search-system-design",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "nearby-geospatial-search-system-design-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing distance calculation filtering?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. distance calculation filtering requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "nearby-geospatial-search-system-design-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Do you need to geo-shard?",
+    "section": "Scaling the read path",
+    "prompt": "A team plans to shard a 150 million POI proximity index across 20 regional shards from day one. POIs change rarely and each index entry is about 50 bytes. What does the lesson's reasoning suggest instead?",
+    "options": [
+      "Keep the whole index, about 7.5 GB, in memory on stateless replicas updated from a change stream, and shard only if it outgrows a node",
+      "Shard by region anyway, because boundary queries between regions are cheaper than replicating a full index",
+      "Store the index only in PostGIS and scale with read replicas, since in-memory indexes cannot be rebuilt",
+      "Shard by POI ID hash so each shard is balanced, and scatter-gather every proximity query"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "distance calculation filtering"]
+    "answer": 0,
+    "explanation": "150M x 50 bytes is about 7.5 GB, which fits in memory, so read-heavy traffic scales by adding stateless replicas; regional partitioning brings boundary queries, hot-city imbalance and handoff work. Sharding by ID hash is worse still, because every nearby query would have to touch every shard.",
+    "tags": [
+      "nearby-geospatial-search-system-design",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["geohash-prefix-spatial-index"] = [
   {
-    id: "geohash-prefix-spatial-index-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Geohash in this context?",
-    scenario: "You are designing the system and need to justify the use of Geohash.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "geohash-prefix-spatial-index-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Prefix is not proximity",
+    "section": "Deep Dive into Geohashes",
+    "prompt": "Two cafes are 15 metres apart but sit on opposite sides of a geohash cell border. Which statement about their geohashes is correct?",
+    "options": [
+      "They must share at least the first five characters, because they are within one precision 5 cell width",
+      "They share a prefix whose length is fixed by their distance, so a prefix query always finds both",
+      "They may share very little prefix, so prefix lookup alone can miss one; neighbour cells are needed",
+      "Their geohashes differ only in the last character, because adjacent cells always have adjacent codes"
     ],
-    answer: 1,
-    explanation: "Geohash provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "geohash"]
+    "answer": 2,
+    "explanation": "A shared prefix means the same rectangular cell, but nearby points across a border can have very different codes, which is why a covering includes neighbour cells and then filters exactly. The fixed-prefix idea is the tempting misconception; near the equator or prime meridian even the first character can differ.",
+    "tags": [
+      "geohash-prefix-spatial-index",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "geohash-prefix-spatial-index-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Prefix matching, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Prefix matching component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "geohash-prefix-spatial-index-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Encoding the first character",
+    "section": "Worked example: encoding San Francisco",
+    "prompt": "Apply the lesson's encoding steps to Sydney (latitude -33.87, longitude 151.21): alternate bits starting with longitude, halving the range each time. What are the first five bits and the resulting first geohash character (base32 alphabet 0123456789bcdefghjkmnpqrstuvwxyz)?",
+    "options": [
+      "01001, giving 9",
+      "10110, giving q",
+      "11101, giving x",
+      "10111, giving r"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "prefix matching"]
+    "answer": 3,
+    "explanation": "Longitude 151 is at or above 0 (1), latitude -33.9 is below 0 (0), longitude is at or above 90 (1), latitude is at or above -45 (1), longitude is at or above 135 (1): 10111 = 23, which is r in the geohash alphabet. The 10110 option gets the last longitude step wrong; 151.21 is above the midpoint 135 of the range 90 to 180.",
+    "tags": [
+      "geohash-prefix-spatial-index",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "geohash-prefix-spatial-index-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing Edge cases at boundaries?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. Edge cases at boundaries requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "geohash-prefix-spatial-index-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Covering at high latitude",
+    "section": "Choosing a covering",
+    "prompt": "You need a 3 km radius search in Oslo (about 60 degrees north) and want center plus 8 neighbours to be guaranteed to cover the circle. Using the lesson's precision table, which choice is correct?",
+    "options": [
+      "Precision 6 with 9 cells, because smaller cells reduce false candidates",
+      "Precision 5 with 9 cells, because a 4.89 km cell exceeds the 3 km radius",
+      "Precision 4 with 9 cells, or precision 5 with every cell intersecting the bounding box, since precision 5 is only about 2.4 km wide here",
+      "Precision 7 with 9 cells, because driver matching uses 153 m cells"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "edge cases at boundaries"]
+    "answer": 2,
+    "explanation": "Cell width shrinks with the cosine of latitude, so at 60 degrees a precision 5 cell is about 2.4 km wide, less than the 3 km radius, and 9 cells are no longer guaranteed; drop to precision 4 or compute the full covering. Precision 5 looks correct if you read the equatorial table without adjusting for latitude, which is exactly the trap.",
+    "tags": [
+      "geohash-prefix-spatial-index",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["geospatial-grid-systems-h3-s2-geohash"] = [
   {
-    id: "geospatial-grid-systems-h3-s2-geohash-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Uber H3 in this context?",
-    scenario: "You are designing the system and need to justify the use of Uber H3.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "geospatial-grid-systems-h3-s2-geohash-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why hexagons for ride-sharing",
+    "section": "Comparing Geospatial Grid Systems",
+    "prompt": "Uber's H3 is favoured for continuous neighbour traversal such as spreading demand to nearby cells. Which property of its cells is the main reason?",
+    "options": [
+      "Each hexagon has six neighbours that all share an edge and sit at one distance",
+      "Cell IDs are ordered along a Hilbert curve, so neighbours have adjacent integer IDs",
+      "Each child hexagon nests exactly inside its parent, so rollups are exact",
+      "Cell areas are identical everywhere on Earth, so radius checks become unnecessary"
     ],
-    answer: 1,
-    explanation: "Uber H3 provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "uber h3"]
+    "answer": 0,
+    "explanation": "Hexagons give six edge-sharing neighbours at a single distance, unlike rectangles whose diagonal neighbours are farther away, which makes k-ring spreading smooth. The Hilbert curve ordering belongs to S2; H3 IDs are hierarchical but not a locality-preserving range.",
+    "tags": [
+      "geospatial-grid-systems-h3-s2-geohash",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "geospatial-grid-systems-h3-s2-geohash-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Google S2, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Google S2 component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "geospatial-grid-systems-h3-s2-geohash-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Picking a surge resolution",
+    "section": "Worked example: picking a resolution",
+    "prompt": "A surge-pricing team wants zones of about 5 square km across an 800 square km city. Using the lesson's H3 averages, which resolution fits and roughly how many cells cover the city?",
+    "options": [
+      "Resolution 8, about 1,100 cells",
+      "Resolution 7, about 150 cells",
+      "Resolution 9, about 7,300 cells",
+      "Resolution 6, about 20 cells"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "google s2"]
+    "answer": 1,
+    "explanation": "Resolution 7 hexagons average about 5.2 square km, so 800 / 5.2 is about 154 cells. Resolution 8 is the tempting pick from the lesson's own city example, but its 0.74 square km cells are about seven times smaller than the requested zone.",
+    "tags": [
+      "geospatial-grid-systems-h3-s2-geohash",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "geospatial-grid-systems-h3-s2-geohash-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing Hexagonal vs rectangular grids?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. Hexagonal vs rectangular grids requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "geospatial-grid-systems-h3-s2-geohash-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Exact rollups by parent",
+    "section": "Comparison",
+    "prompt": "Finance wants billing totals per parent zone that exactly equal the sum of trips recorded at a finer resolution. The analytics team indexes trips by H3 resolution 9 and rolls up to parents. What problem should you raise?",
+    "options": [
+      "H3 has no parent cells, so rollups require re-indexing each trip at the coarser resolution",
+      "H3 IDs are strings, so aggregation by prefix is too slow for billing workloads",
+      "H3 parents nest approximately, so child cells do not exactly tile the parent and edge trips can be misassigned; S2 or geohash nest exactly",
+      "H3 pentagons make every rollup inaccurate, so results must be corrected by a factor of five-sixths"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "hexagonal vs rectangular grids"]
+    "answer": 2,
+    "explanation": "The comparison table lists H3 hierarchy as approximate nesting with 7 children, so parent totals from child cells are approximate at the edges, while S2 and geohash nest exactly. H3 does have parents; the issue is that seven children only approximately cover their parent.",
+    "tags": [
+      "geospatial-grid-systems-h3-s2-geohash",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["redis-geo-spatial-hot-path"] = [
   {
-    id: "redis-geo-spatial-hot-path-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Redis GEOADD in this context?",
-    scenario: "You are designing the system and need to justify the use of Redis GEOADD.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "redis-geo-spatial-hot-path-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "No per-member expiry",
+    "section": "Leveraging Redis for Fast Geospatial Queries",
+    "prompt": "A driver's app crashes and stops sending locations. Why can you not simply set a TTL on that driver in the Redis GEO index?",
+    "options": [
+      "GEO members are geohash scores, and Redis forbids TTLs on any numeric value",
+      "TTLs work per member, but they are not replicated to read replicas",
+      "GEOADD resets any TTL on every write, so the TTL would never fire for active drivers",
+      "A TTL applies to the whole GEO sorted set key, not to a single member"
     ],
-    answer: 1,
-    explanation: "Redis GEOADD provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "redis geoadd"]
+    "answer": 3,
+    "explanation": "Redis expiry is per key, and a GEO index is one sorted set, so stale members must be removed explicitly using separate freshness tracking. The option about GEOADD resetting TTLs sounds technical but misses the point: there is no member-level TTL to reset in the first place.",
+    "tags": [
+      "redis-geo-spatial-hot-path",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "redis-geo-spatial-hot-path-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing In-memory spatial queries, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your In-memory spatial queries component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "redis-geo-spatial-hot-path-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Where the load really is",
+    "section": "Worked example: one million active drivers",
+    "prompt": "Scale the lesson's example to 2 million active drivers reporting every 5 seconds, with the largest city holding 80,000 of them. Which estimate and conclusion are right?",
+    "options": [
+      "About 400,000 writes per second globally and 16,000 on the city key; memory is about 200 MB, so write rate and the hot key matter most",
+      "About 400,000 writes per second globally; memory is about 20 GB, so RAM is the main constraint",
+      "About 40,000 writes per second globally and 1,600 on the city key, so no sharding is needed",
+      "About 400,000 writes per second globally and 16,000 on the city key; memory is about 2 GB per shard, so RAM limits the city key"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "in-memory spatial queries"]
+    "answer": 0,
+    "explanation": "2M / 5 s = 400,000 writes per second and 80,000 / 5 = 16,000 on the city key; at roughly 60 to 100 bytes per entry, 2M drivers is on the order of 200 MB. As in the lesson, memory is not the bottleneck; write rate and hot keys are, so the RAM-focused options misread the numbers.",
+    "tags": [
+      "redis-geo-spatial-hot-path",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "redis-geo-spatial-hot-path-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing Sorted sets under the hood?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. Sorted sets under the hood requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "redis-geo-spatial-hot-path-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Why queries recheck freshness",
+    "section": "Freshness without per-member TTL",
+    "prompt": "You run the lesson's design: a GEO key plus a last-seen sorted set per city, and a Lua sweeper every few seconds that removes drivers silent for 30 seconds. Why must each rider query still check last-seen on its results?",
+    "options": [
+      "Because the Lua script is not atomic, so it may remove a driver from one key but not the other",
+      "Because GEOSEARCH returns results in random order, so freshness is needed to sort them",
+      "Because the sweep can lag or stall, so stale drivers may still be in the GEO key when a query runs",
+      "Because last-seen scores are stored in seconds while GEO scores are geohashes, so they drift apart"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "sorted sets under the hood"]
+    "answer": 2,
+    "explanation": "The sweeper is periodic and can fall behind, so the query itself must reject candidates older than its freshness limit rather than trusting the index to be clean. The lesson's script removes members from both keys atomically, so the non-atomic option describes a problem the design already avoids.",
+    "tags": [
+      "redis-geo-spatial-hot-path",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["geofencing-point-in-polygon"] = [
   {
-    id: "geofencing-point-in-polygon-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Geofencing in this context?",
-    scenario: "You are designing the system and need to justify the use of Geofencing.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "geofencing-point-in-polygon-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Flapping at the boundary",
+    "section": "Geofencing and the Point-in-Polygon Problem",
+    "prompt": "A driver waiting at an airport pickup boundary produces GPS fixes that alternate inside and outside every second. What must the system add so it does not fire a stream of enter and exit events?",
+    "options": [
+      "A finer spatial index, so the exact point-in-polygon test is more precise at the edge",
+      "Persisted per-device membership plus hysteresis, consecutive fixes or a dwell interval before a transition",
+      "A larger bounding box around the polygon, so the driver stays inside the candidate set",
+      "A shorter location reporting interval, so the average position settles on one side"
     ],
-    answer: 1,
-    explanation: "Geofencing provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "geofencing"]
+    "answer": 1,
+    "explanation": "Membership alone does not define an event; you need the last state per device and a rule such as hysteresis or several consecutive fixes before emitting enter or exit. A finer index or a more precise test does not help, because the jitter is in the input positions, not in the geometry.",
+    "tags": [
+      "geofencing-point-in-polygon",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "geofencing-point-in-polygon-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Ray casting algorithm, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Ray casting algorithm component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "geofencing-point-in-polygon-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Two-stage filter cost",
+    "section": "Worked example: delivery zones",
+    "prompt": "You have 20,000 zones averaging 500 vertices and 100,000 location updates per second. An R-tree on bounding boxes leaves about 2 candidate polygons per point. Roughly what exact-test load remains?",
+    "options": [
+      "About 2 billion exact tests and 1 trillion edge checks per second",
+      "About 100,000 exact tests and 50 million edge checks per second",
+      "About 200,000 exact tests and 10 billion edge checks per second",
+      "About 200,000 exact tests and 100 million edge checks per second"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "ray casting algorithm"]
+    "answer": 3,
+    "explanation": "100,000 points x 2 candidates = 200,000 exact tests, each O(V) with 500 edges, about 100 million edge checks per second, which a handful of cores can handle. The 2 billion figure is the naive every-point-against-every-polygon load that the bounding-box stage exists to eliminate.",
+    "tags": [
+      "geofencing-point-in-polygon",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "geofencing-point-in-polygon-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing spatial indexing boundaries?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. spatial indexing boundaries requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "geofencing-point-in-polygon-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Replay without duplicates",
+    "section": "Event pipeline",
+    "prompt": "A geofence worker crashes and replays the last minute of location fixes on restart. Customers must not receive a second \"your courier has arrived\" notification. What does the lesson's pipeline rely on?",
+    "options": [
+      "Event IDs derived from device, polygon, polygon version and transition sequence, so replays produce the same ID for consumers to deduplicate",
+      "A fresh random UUID per emitted event, so consumers can tell the replayed events apart",
+      "Skipping replay entirely and resuming from the newest fix, so no transition is evaluated twice",
+      "Round-robin partitioning of fixes, so the replay lands on a different worker than the original"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "spatial indexing boundaries"]
+    "answer": 0,
+    "explanation": "A deterministic event ID means a replayed transition yields the same ID, so consumers drop the duplicate. Random UUIDs are the tempting wrong choice: every replay would look like a brand new event, which is exactly what causes duplicate notifications.",
+    "tags": [
+      "geofencing-point-in-polygon",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["ray-casting-point-in-polygon"] = [
   {
-    id: "ray-casting-point-in-polygon-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Ray casting in this context?",
-    scenario: "You are designing the system and need to justify the use of Ray casting.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "ray-casting-point-in-polygon-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Why the half-open rule",
+    "section": "The Ray Casting Algorithm",
+    "prompt": "In ray casting, what problem does the half-open endpoint rule (count an edge only if exactly one endpoint is strictly above the ray) solve?",
+    "options": [
+      "It prevents a ray passing exactly through a vertex from counting two crossings",
+      "It decides whether a point lying on an edge counts as inside or outside",
+      "It makes the test run in O(log V) instead of O(V) for polygons with many edges",
+      "It corrects for longitude wrapping when a polygon crosses the antimeridian"
     ],
-    answer: 1,
-    explanation: "Ray casting provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "ray casting"]
+    "answer": 0,
+    "explanation": "A ray through a vertex touches two edges, and the half-open rule ensures that vertex contributes once, which also skips horizontal edges. Boundary policy is separate: the lesson says to detect on-edge points explicitly before odd/even counting, not to rely on the vertex rule.",
+    "tags": [
+      "ray-casting-point-in-polygon",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "ray-casting-point-in-polygon-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Point inclusion, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Point inclusion component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "ray-casting-point-in-polygon-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Ray through a vertex",
+    "section": "Worked example",
+    "prompt": "Triangle vertices are (0,0), (6,3) and (0,6). Test point (2,3) with a ray toward +x, using the lesson's standard loop. How many crossings are counted, and what is the verdict?",
+    "options": [
+      "0 crossings, so outside",
+      "2 crossings, so outside",
+      "1 crossing, so inside",
+      "3 crossings, so inside"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "point inclusion"]
+    "answer": 2,
+    "explanation": "Edge (0,0)-(6,3) is skipped since neither endpoint is strictly above y = 3; edge (6,3)-(0,6) counts and crosses at x = 6, right of the point; edge (0,6)-(0,0) crosses at x = 0, left of the point, so it does not count. That leaves 1 crossing, inside; counting both edges at vertex (6,3) would give 2 and the wrong answer.",
+    "tags": [
+      "ray-casting-point-in-polygon",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "ray-casting-point-in-polygon-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing complex polygon rendering?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. complex polygon rendering requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "ray-casting-point-in-polygon-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Star-shaped zone mismatch",
+    "section": "Crossing number versus winding number",
+    "prompt": "An ops user draws a delivery zone as a self-intersecting five-pointed star. Your service uses crossing-number ray casting, while the admin map renders polygons with the SVG default fill rule. A courier in the star's centre is \"outside\" per the service but shown as inside on the map. Why?",
+    "options": [
+      "Floating-point error near the centre flips the parity, so the service needs robust predicates",
+      "The ray passes through a vertex of the star, so the half-open rule is miscounting",
+      "The map projects coordinates differently, so the point is really outside the drawn shape",
+      "Even-odd treats the overlapping centre as a hole while the nonzero rule used by the map fills it"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "complex polygon rendering"]
+    "answer": 3,
+    "explanation": "For self-intersecting shapes the two rules disagree: crossing number counts an even number of crossings at the centre and calls it outside, while winding number sees the boundary wrap the point and fills it; SVG's default is nonzero. Floating-point issues only affect points within a tiny tolerance of an edge, not the middle of a region.",
+    "tags": [
+      "ray-casting-point-in-polygon",
+      "staff",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["seen-filtering-bloom-vs-exact-sets"] = [
   {
-    id: "seen-filtering-bloom-vs-exact-sets-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Bloom filters in this context?",
-    scenario: "You are designing the system and need to justify the use of Bloom filters.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "seen-filtering-bloom-vs-exact-sets-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Which error Bloom makes",
+    "section": "Filtering 'Seen' Items in Recommendations",
+    "prompt": "A feed checks a Bloom filter of seen item IDs before showing each candidate. What is the only kind of mistake the filter can make, and what does the user experience?",
+    "options": [
+      "A false negative: an already seen item is reported unseen and shown again",
+      "A false positive: an unseen item is reported seen and silently skipped",
+      "Both kinds equally often, so the feed sometimes repeats and sometimes skips items",
+      "A deletion error: removed items reappear once the filter is rebuilt"
     ],
-    answer: 1,
-    explanation: "Bloom filters provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "bloom filters"]
+    "answer": 1,
+    "explanation": "Bloom filters say definitely not seen or possibly seen, so the only error is a false positive, which in a feed means a valid item is skipped, usually acceptable. False negatives cannot happen because every inserted item sets all of its bits.",
+    "tags": [
+      "seen-filtering-bloom-vs-exact-sets",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "seen-filtering-bloom-vs-exact-sets-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Seen filtering, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Seen filtering component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "seen-filtering-bloom-vs-exact-sets-c2",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Overfilled filter",
+    "section": "Filtering 'Seen' Items in Recommendations",
+    "prompt": "Monthly seen-filters are sized for 15,000 items at 1 percent (about 9.6 bits per item, 7 hashes). A heavy user racks up 45,000 impressions in one month. What happens to that user's filter?",
+    "options": [
+      "The false-positive rate stays near 1 percent, because the hash count was fixed at sizing time",
+      "The filter starts producing false negatives, so seen items reappear in the feed",
+      "The false-positive rate climbs to roughly 40 percent, so many fresh items are wrongly skipped",
+      "The false-positive rate rises linearly to about 3 percent, which is still acceptable"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "seen filtering"]
+    "answer": 2,
+    "explanation": "At three times capacity only about 3.2 bits per item remain, and with 7 hashes the false-positive rate is (1 - e^-2.19)^7, roughly 40 percent, so the error climbs far faster than linearly. That is why the lesson says to monitor insert count and rotate or rebuild; false negatives still cannot occur.",
+    "tags": [
+      "seen-filtering-bloom-vs-exact-sets",
+      "staff",
+      "inline"
+    ]
   },
   {
-    id: "seen-filtering-bloom-vs-exact-sets-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing False positives vs memory?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. False positives vs memory requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "seen-filtering-bloom-vs-exact-sets-c3",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Sizing a large filter",
+    "section": "Sizing formulas and a rotation example",
+    "prompt": "Using m = -n ln(p) / (ln 2)^2 and k = (m / n) ln 2, size a Bloom filter for 1,000,000 seen items at a 1 percent false-positive rate. What are the approximate memory and hash count?",
+    "options": [
+      "About 1.2 MB with 3 hash functions",
+      "About 120 KB with 7 hash functions",
+      "About 12 MB with 10 hash functions",
+      "About 1.2 MB with 7 hash functions"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "false positives vs memory"]
+    "answer": 3,
+    "explanation": "m is about 9.59 bits per item, so 1M items need about 9.6 million bits, roughly 1.2 MB, and k = 9.59 x 0.693 is about 7. The 120 KB option is the lesson's figure for 100,000 items; memory scales linearly with n at a fixed error rate.",
+    "tags": [
+      "seen-filtering-bloom-vs-exact-sets",
+      "apply",
+      "inline"
+    ]
   }
 ];
 
 window.QUESTION_BANK["matching-and-recommendation-algorithms"] = [
   {
-    id: "matching-and-recommendation-algorithms-q1",
-    type: "mcq",
-    difficulty: "recall",
-    prompt: "Which of the following best describes the primary advantage of Bipartite matching in this context?",
-    scenario: "You are designing the system and need to justify the use of Bipartite matching.",
-    options: [
-      "It completely eliminates the need for any caching layer.",
-      "It provides specialized capabilities optimized for this exact use case.",
-      "It reduces network latency to zero.",
-      "It allows the system to scale infinitely without resource limits."
+    "id": "matching-and-recommendation-algorithms-c1",
+    "type": "mcq",
+    "difficulty": "recall",
+    "title": "Leakage in training",
+    "section": "Scaling Matching and Recommendations",
+    "prompt": "A ranking model trained with a \"messages exchanged after match\" feature shows a large offline gain but no improvement in production. What does the lesson identify as the cause?",
+    "options": [
+      "The feature is computed after the recommendation, so it leaks the label and cannot be reproduced at serving time",
+      "The feature is too sparse for a deep model, so it should be moved into candidate generation instead",
+      "The ANN index version differs from the model version, so embeddings are misaligned",
+      "Offline evaluation measures recall, while production measures precision, so gains never transfer"
     ],
-    answer: 1,
-    explanation: "Bipartite matching provides specialized capabilities, whereas the other options are either impossible (zero latency, infinite scale) or factually incorrect.",
-    tags: ["system-design", "bipartite matching"]
+    "answer": 0,
+    "explanation": "Features must be available at serving time; an outcome observed after the recommendation leaks the label, producing offline wins production cannot reproduce. Version mismatch is a real risk the lesson mentions, but it would not explain a gain that exists only because of a post-outcome feature.",
+    "tags": [
+      "matching-and-recommendation-algorithms",
+      "recall",
+      "inline"
+    ]
   },
   {
-    id: "matching-and-recommendation-algorithms-q2",
-    type: "mcq",
-    difficulty: "apply",
-    prompt: "When implementing Collaborative filtering, how should the system handle sudden spikes in user activity?",
-    scenario: "A viral event causes a 100x traffic spike. Your Collaborative filtering component is becoming a bottleneck.",
-    options: [
-      "Process all requests synchronously to ensure data consistency.",
-      "Implement aggressive backoff and fail all new requests immediately.",
-      "Use asynchronous processing, load shedding, and caching to protect the core system.",
-      "Restart the servers to clear the connection backlog."
+    "id": "matching-and-recommendation-algorithms-c2",
+    "type": "mcq",
+    "difficulty": "apply",
+    "title": "Fitting a slower ranker",
+    "section": "Worked example: a 150 ms budget",
+    "prompt": "In the lesson's 150 ms pipeline (retrieval 20 ms, filtering 5 ms, ranking 60 ms for 800 candidates, re-ranking 5 ms), a new ranker needs about 120 ms for 800 candidates, scaling roughly linearly with batch size. What is the most sensible way to keep the p99 budget?",
+    "options": [
+      "Remove the Bloom filter and exact seen checks to free enough time for the new ranker",
+      "Drop the re-ranking stage and exploration slots, which recovers the needed time",
+      "Pass about 400 candidates to the new ranker, bringing ranking near 60 ms",
+      "Replace ANN with exact nearest neighbour search so fewer candidates need ranking"
     ],
-    answer: 2,
-    explanation: "Asynchronous processing and load shedding are standard practices to protect the system during extreme spikes. Synchronous processing would make it worse.",
-    tags: ["system-design", "scaling", "collaborative filtering"]
+    "answer": 2,
+    "explanation": "Filtering and re-ranking together take only 10 ms, so dropping them cannot absorb a 60 ms overrun; halving the ranked set restores ranking to about 60 ms and keeps the remaining budget for network hops and feature reads. Exact nearest neighbour search is far slower than ANN and would blow the retrieval budget.",
+    "tags": [
+      "matching-and-recommendation-algorithms",
+      "apply",
+      "inline"
+    ]
   },
   {
-    id: "matching-and-recommendation-algorithms-q3",
-    type: "mcq",
-    difficulty: "staff",
-    prompt: "In a globally distributed setup, what is the most significant trade-off when optimizing cold start problem?",
-    scenario: "Your team is migrating from a single-region setup to a multi-region deployment. cold start problem requires careful design.",
-    options: [
-      "Strong consistency across regions significantly increases write latency.",
-      "Adding more regions automatically reduces the overall database cost.",
-      "Global distribution eliminates the need for disaster recovery plans.",
-      "Read replicas in new regions will have zero replication lag."
+    "id": "matching-and-recommendation-algorithms-c3",
+    "type": "mcq",
+    "difficulty": "staff",
+    "title": "Two-sided attention",
+    "section": "Two-sided matching notes",
+    "prompt": "A dating app ranks candidates purely by each viewer's predicted chance of liking them. After a month, the top 5 percent of profiles receive most impressions and complain of overload, while most users get few matches. What does the lesson recommend?",
+    "options": [
+      "Increase exploration slots so the ranker learns faster which profiles are popular",
+      "Cap exposure for very popular profiles and rank on mutual-interest likelihood rather than one-sided attractiveness",
+      "Reintroduce an Elo-style desirability score so popular profiles are matched only with each other",
+      "Shrink the geospatial radius so each popular profile is shown to fewer nearby viewers"
     ],
-    answer: 0,
-    explanation: "Enforcing strong consistency across geographic distances requires synchronous replication, which is bound by the speed of light and thus increases write latency.",
-    tags: ["system-design", "multi-region", "cold start problem"]
+    "answer": 1,
+    "explanation": "Two-sided markets must balance attention, so systems cap exposure and optimise for mutual interest instead of one-sided appeal. The Elo option is tempting because it sounds like balancing, but the lesson notes Tinder moved away from Elo-style desirability toward models of mutual activity and preferences.",
+    "tags": [
+      "matching-and-recommendation-algorithms",
+      "staff",
+      "inline"
+    ]
   }
 ];

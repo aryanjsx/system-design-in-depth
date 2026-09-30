@@ -9,7 +9,7 @@ We’ll compare the places a cache can live, follow a read that fills one, and d
 
 Suppose a catalog service copies product \`p7\` into a cache. Finding a usable copy is a **hit**; finding none is a **miss**. The product database remains the source of truth. Losing the cached copy should leave somewhere to recover the answer.
 
-![A source ledger retains product p7 while an arrow labeled copy points to a separate cache card held by a reader.](/course-assets/system-design/illustrations/cache-copy.webp)
+
 
 That makes the copy replaceable, but does not make its contents permanently correct. If the product changes, the old copy needs a rule for when readers must stop using it. Name the allowed staleness before choosing a cache lifetime.
 

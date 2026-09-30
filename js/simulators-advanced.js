@@ -130,7 +130,7 @@ window.SIMULATORS = window.SIMULATORS || {};
   window.SIMULATORS["queue-lag"] = {
     id: "queue-lag",
     title: "Queue Backpressure & Lag",
-    slugs: ["queue-lag", "backpressure"],
+    slugs: ["queue-lag", "backpressure", "partitioned-log-system-design"],
     blurb: "Simulate arrival vs service rates and observe queue buildup and lag.",
     render() {
       return `
@@ -249,7 +249,7 @@ window.SIMULATORS = window.SIMULATORS || {};
   window.SIMULATORS["circuit-breaker"] = {
     id: "circuit-breaker",
     title: "Circuit Breaker State Machine",
-    slugs: ["circuit-breakers-and-timeouts"],
+    slugs: ["circuit-breakers-and-timeouts", "cache-availability-and-database-fallback"],
     blurb: "Visualize state transitions: CLOSED -> OPEN -> HALF-OPEN.",
     render() {
       return `
@@ -480,7 +480,7 @@ window.SIMULATORS = window.SIMULATORS || {};
   window.SIMULATORS["geohash-explorer"] = {
     id: "geohash-explorer",
     title: "Geohash & Spatial Indexing",
-    slugs: ["geohash-prefix-spatial-index"],
+    slugs: ["geohash-prefix-spatial-index", "geospatial-grid-systems-h3-s2-geohash", "nearby-geospatial-search-system-design"],
     blurb: "Click on the map grid to generate Geohashes based on coordinates.",
     render() {
       return `
@@ -562,7 +562,7 @@ window.SIMULATORS = window.SIMULATORS || {};
   window.SIMULATORS["hyperloglog"] = {
     id: "hyperloglog",
     title: "HyperLogLog Cardinality Estimator",
-    slugs: ["hyperloglog-cardinality-estimation"],
+    slugs: ["hyperloglog-cardinality-estimation", "view-counting-at-scale"],
     blurb: "Estimate count of unique items using probabilistic data structures.",
     render() {
       return `
@@ -671,7 +671,7 @@ window.SIMULATORS = window.SIMULATORS || {};
   window.SIMULATORS["bm25"] = {
     id: "bm25",
     title: "Inverted Index & BM25 Ranking",
-    slugs: ["bm25-production-ranking"],
+    slugs: ["bm25-production-ranking", "tf-idf-relevance-scoring", "inverted-index-and-posting-lists"],
     blurb: "Search toy documents and view real-time TF-IDF/BM25 scoring.",
     render() {
       return `
@@ -748,7 +748,7 @@ window.SIMULATORS = window.SIMULATORS || {};
               <strong>Doc ${d.id}</strong>
               <span style="font-family:var(--font-mono); font-size:12px; color:${d.score > 0 ? 'var(--success)' : 'var(--text-muted)'};">Score: ${d.score.toFixed(3)}</span>
             </div>
-            <div style="font-size:12px;">${d.text.replace(new RegExp(`(${query.join('|')})`, 'gi'), '<mark style="background:var(--accent); color:#000; padding:0 2px;">$1</mark>')}</div>
+            <div style="font-size:12px;">${d.text.replace(new RegExp(`(${query.join('|')})`, 'gi'), '<mark style="background:var(--accent); color:var(--accent-fg); padding:0 2px;">$1</mark>')}</div>
           </div>
         `).join('');
       });

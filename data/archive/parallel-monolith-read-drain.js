@@ -63,7 +63,7 @@ Ada is selected for the new read path; Bo stays on the old one. The local router
 
 The example separates three target failures: missing means no copied record, stale means a different version, and mismatch means changed contents at the current version. Old-served shadow comparisons use one shared SQLite snapshot here, so they do not have the cross-database timing ambiguity described above.
 
-Save the [read-drain replay](/course-assets/system-design/m27-lab.py) and [shared implementation](/course-assets/system-design/m27-core.py) together. The original capture used Python 3.14.6 and SQLite 3.53.4 on 12 September 2026. Each run creates temporary state.
+Save the read-drain replay and shared implementation together. The original capture used Python 3.14.6 and SQLite 3.53.4 on 12 September 2026. Each run creates temporary state.
 
 \`\`\`bash title="terminal"
 python3 m27-lab.py drain

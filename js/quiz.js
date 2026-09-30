@@ -5,8 +5,15 @@ window.Quiz = (() => {
     return window.QUESTION_BANK && window.QUESTION_BANK[slug] && window.QUESTION_BANK[slug].length > 0;
   }
   
+  // End-of-lesson questions: those not already placed inline after a section
+  const endQuestions = slug => (window.QUESTION_BANK?.[slug] || []).filter(q => !q.section);
+
+  function hasEndQuestions(slug) {
+    return endQuestions(slug).length > 0;
+  }
+
   function getNextQuestion(slug) {
-    const questions = window.QUESTION_BANK[slug];
+    const questions = endQuestions(slug);
     const available = questions.filter(q => !seenQuestions.has(q.id));
     if (available.length === 0) {
       questions.forEach(q => seenQuestions.delete(q.id));
@@ -28,6 +35,7 @@ window.Quiz = (() => {
   function renderQuiz(slug) {
     if (!hasQuestions(slug)) return '';
     
+    if (!hasEndQuestions(slug)) return '';
     const q = getNextQuestion(slug);
     seenQuestions.add(q.id);
     
@@ -165,6 +173,16 @@ window.Quiz = (() => {
         }
         
         card.querySelectorAll('input, button:not(.quiz-next-btn)').forEach(el => el.disabled = true);
+
+        // Show which option was right (and which pick was wrong)
+        if (type === 'mcq') {
+          card.querySelectorAll(`input[name="quiz-${qid}"]`).forEach(inp => {
+            const label = inp.closest('.quiz-option-label');
+            if (!label) return;
+            if (parseInt(inp.value) === q.answer) label.classList.add('correct');
+            else if (inp.checked) label.classList.add('incorrect');
+          });
+        }
         
         const fb = card.querySelector('.exercise-feedback');
         const msg = fb.querySelector('.feedback-msg');
@@ -178,7 +196,8 @@ window.Quiz = (() => {
           msg.innerHTML = '<strong>✗ Incorrect.</strong>';
         }
         
-        card.querySelector('.quiz-next-btn').style.display = 'inline-block';
+        const nextBtn = card.querySelector('.quiz-next-btn');
+        if (nextBtn) nextBtn.style.display = 'inline-block';
         btn.style.display = 'none';
         
         if (window.Progress && window.Progress.recordQuizAttempt) {
@@ -196,8 +215,59 @@ window.Quiz = (() => {
      }
   });
 
+  /**
+   * Compact self-check shown right after the section it tests (question.section = that <h2>'s text).
+   * Reuses the quiz-card grading handler above.
+   */
+  function renderInlineCheck(q, slug) {
+    return `
+      <aside class="quiz-card inline-check" id="quiz-${q.id}" data-type="${q.type}" data-slug="${slug}" aria-label="Check yourself">
+        <div class="inline-check__head">
+          <span class="inline-check__label">Check yourself</span>
+          <span class="inline-check__title">${escapeHtml(q.title || '')}</span>
+          <span class="inline-check__level">${escapeHtml(q.difficulty || '')}</span>
+        </div>
+        <p class="inline-check__prompt">${escapeHtml(q.prompt)}</p>
+        <div class="quiz-options inline-check__options">${renderOptions(q)}</div>
+        <button class="btn btn--sm btn--primary quiz-submit-btn" data-qid="${q.id}">Check answer</button>
+        <div class="exercise-feedback quiz-feedback inline-check__feedback" id="feedback-${q.id}" style="display: none;">
+          <div class="feedback-msg"></div>
+          <div class="feedback-exp">${escapeHtml(q.explanation)}</div>
+        </div>
+      </aside>`;
+  }
+
+  const headingText = html => html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+
+  /**
+   * Insert this unit's section-anchored questions into lesson HTML, each at the end of its section
+   * (just before the next <h2>, or at the end of the content).
+   */
+  function insertInlineChecks(html, slug) {
+    const qs = (window.QUESTION_BANK?.[slug] || []).filter(q => q.section && q.type === 'mcq');
+    if (!qs.length || !html) return html;
+    const heads = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map(m => ({ at: m.index, end: m.index + m[0].length, text: headingText(m[1]) }));
+    const inserts = [];
+    for (const q of qs) {
+      const i = heads.findIndex(h => h.text === q.section);
+      if (i < 0) continue;
+      let pos = i + 1 < heads.length ? heads[i + 1].at : html.lastIndexOf('</div>');
+      if (pos < heads[i].end) pos = html.length;
+      inserts.push({ pos, html: renderInlineCheck(q, slug) });
+    }
+    // group by position (keeping question order), then apply from the end so earlier offsets stay valid
+    const grouped = new Map();
+    for (const ins of inserts) grouped.set(ins.pos, (grouped.get(ins.pos) || []).concat(ins.html));
+    let out = html;
+    for (const [pos, parts] of [...grouped.entries()].sort((a, b) => b[0] - a[0])) out = out.slice(0, pos) + parts.join('') + out.slice(pos);
+    return out;
+  }
+
   return {
     hasQuestions,
-    renderQuiz
+    hasEndQuestions,
+    renderQuiz,
+    renderInlineCheck,
+    insertInlineChecks
   };
 })();

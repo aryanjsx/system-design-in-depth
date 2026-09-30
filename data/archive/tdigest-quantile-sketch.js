@@ -34,7 +34,7 @@ The example uses Cam Davidson-Pilon's Python \`tdigest\` package, version 0.5.2.
 
 This package uses an admission threshold \`4 × N × delta × q_c × (1 − q_c)\`, where q_c is a centroid's midpoint rank and N is total weight. It permits smaller centroid weights toward the ends. Here delta is a compression parameter, not a failure probability. We use delta 0.05 and K 25; the package triggers compression when its centroid count exceeds \`K / delta\`.
 
-Download the [quantile example](/course-assets/system-design/m18-tdigest.py) and [pinned requirements](/course-assets/system-design/m18-tdigest-requirements.txt) into one directory, keeping their filenames. The [package license](/course-assets/system-design/m18-tdigest-license.txt) accompanies the dependency. The setup below requires Python 3.12.
+Download the quantile example and pinned requirements into one directory, keeping their filenames. The package license accompanies the dependency. The setup below requires Python 3.12.
 
 The chosen input has 360 dimensionless observations: 0 through 89 repeated three times each, then 100 through 990 in steps of 10. These are constructed values, not measured service latencies. The example processes forward, reverse and shuffled orders, resetting the package's random seed to 23 for each build.
 

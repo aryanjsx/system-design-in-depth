@@ -259,5 +259,13 @@ if (fs.existsSync(flashcardsDir)) {
   // Add validation logic if flashcards structure is known
 }
 
+// Asset stamps: _headers caches js/css/data as immutable, so stale ?v= hashes would pin old files
+try {
+  require('child_process').execFileSync(process.execPath, [path.join(__dirname, 'stamp-assets.js'), '--check'], { stdio: 'pipe' });
+  reportSuccess('Asset stamps: all ?v= hashes up to date');
+} catch (e) {
+  reportError('Asset stamps are stale — run `node tools/stamp-assets.js`');
+}
+
 console.log(`\n${errorCount} errors, ${warningCount} warnings`);
 process.exit(errorCount > 0 ? 1 : 0);

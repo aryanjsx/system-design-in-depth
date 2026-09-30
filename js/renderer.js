@@ -129,14 +129,21 @@ window.Renderer = (() => {
     // Get module content if loaded
     const moduleContent = window.MODULE_CONTENT?.[mod.id]?.[slug];
     const archiveContent = window.ARCHIVE_CONTENT?.[slug] || null;
-    // Trigger lazy-load of archive file if not yet loaded
-    if (!archiveContent && unit.archive && !window.ARCHIVE_CONTENT?.[slug]) {
+    // Trigger lazy-load of archive file if not yet loaded (only slugs that ship a data/archive file)
+    if (!archiveContent && unit.archive && ARCHIVE_SLUGS.has(slug) && !window.ARCHIVE_CONTENT?.[slug]) {
       const archiveScript = document.createElement('script');
-      archiveScript.src = 'data/archive/' + slug + '.js';
+      archiveScript.src = 'data/archive/' + slug + '.js' + (window.ASSET_VERSION ? '?v=' + window.ASSET_VERSION : '');
       archiveScript.onload = () => {
-        // Re-render once archive content is available
+        // Re-render once archive content is available (only if the learner is still on this lesson),
+        // then restore what the first render wired up: simulator, diagrams, audio.
         const reader = document.getElementById('reader');
-        if (reader) reader.innerHTML = renderLesson(slug);
+        if (!reader || decodeURIComponent(location.hash) !== '#topic/' + slug) return;
+        const sim = window.Simulators?.getSimulatorForUnit?.(slug)?.sim;
+        sim?.unmount?.(reader);
+        reader.innerHTML = renderLesson(slug);
+        sim?.mount?.(reader);
+        window.App?.initMermaid?.();
+        window.setupAudioListeners?.(slug);
       };
       document.head.appendChild(archiveScript);
     }
@@ -184,6 +191,16 @@ window.Renderer = (() => {
     // Video embed (from module content)
     if (moduleContent?.video?.youtubeId) {
       html += renderVideoEmbed(moduleContent.video);
+      html += renderMoreVideos(moduleContent.videos);
+    }
+
+    // Intuition-first primer (plain-language mental model before the deep dive)
+    if (moduleContent?.intuition) {
+      html += `
+        <aside class="intuition">
+          <h3 class="intuition__title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>Intuition first</h3>
+          <div class="intuition__body">${moduleContent.intuition}</div>
+        </aside>`;
     }
 
     // Audio player
@@ -215,11 +232,11 @@ window.Renderer = (() => {
       const isPlaceholder = moduleContent?.content?.includes('This topic is covered in depth in the curriculum archive');
       if (moduleContent?.content && !isPlaceholder && !archiveContent.includes('Real-World Usage')) {
         html += '<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--divider);">';
-        html += '<div class="lesson-deep-dive">' + moduleContent.content + '</div>';
+        html += '<div class="lesson-deep-dive">' + withChecks(moduleContent.content, slug) + '</div>';
       }
     } else if (moduleContent?.content) {
       // Use comprehensive generated module content
-      html += moduleContent.content;
+      html += withChecks(moduleContent.content, slug);
     } else {
       // Fallback
       html += renderFallbackContent(unit, mod);
@@ -340,7 +357,48 @@ window.Renderer = (() => {
         <a href="https://www.youtube.com/watch?v=${video.youtubeId}" target="_blank" rel="noopener noreferrer" style="margin-left:auto; font-size:11px; color:var(--accent,#6366f1); text-decoration:none; display:flex; align-items:center; gap:2px;">
           Watch on YouTube ↗
         </a>
-      </div>` : ''}`;
+      </div>` : ''}
+      ${video.why ? `<p class="video-embed__why">${escapeHtml(video.why)}</p>` : ''}`;
+  }
+
+  // Units with a data/archive/<slug>.js file; requesting any other slug 404s. Keep in sync with data/archive/.
+  const ARCHIVE_SLUGS = new Set(["adaptive-bitrate-and-cdn-decider","availability-durability-consistency-cost","back-of-the-envelope-capacity-planning","blocklist-versioned-file-metadata","boolean-tiered-search","byte-range-indexed-object-storage","caching-layers","clock-skew-and-id-ordering","concurrency-vs-parallelism","database-ticket-servers","file-backed-dictionary-storage-engine","logical-system-design","mergeable-sketches-for-analytics","newly-unread-indicator","non-functional-requirements","notification-system-design","parallel-monolith-read-drain","partition-manager-and-map-table","photo-tagging-coordinate-model","requirements-clarification","rule-engine-trigger-framework","social-graph-follows-and-flockdb","stop-words-and-champion-lists","system-design-tradeoffs","tcp-vs-udp","tdigest-quantile-sketch","when-not-to-add-infrastructure"]);
+
+  // Section-anchored self-check questions (see Quiz.insertInlineChecks)
+  const withChecks = (content, slug) => window.Quiz?.insertInlineChecks ? window.Quiz.insertInlineChecks(content, slug) : content;
+
+  const VIDEO_ROLE_LABELS = {
+    intro: 'Quick intro',
+    'deep-dive': 'Deep dive',
+    interview: 'Interview walkthrough',
+    'case-study': 'Case study'
+  };
+
+  /**
+   * Render supplementary videos (intro / deep-dive / interview / case-study)
+   */
+  function renderMoreVideos(videos) {
+    if (!Array.isArray(videos) || !videos.length) return '';
+    const cards = videos.filter(v => v?.youtubeId).map(v => `
+      <a class="video-more__card" href="https://www.youtube.com/watch?v=${v.youtubeId}" target="_blank" rel="noopener noreferrer"
+         onclick="if (window.Analytics?.trackVideoPlay) window.Analytics.trackVideoPlay('${v.youtubeId}', this.dataset.title)"
+         data-title="${escapeHtml(v.title || '')}">
+        <span class="video-more__thumb">
+          <img src="https://img.youtube.com/vi/${v.youtubeId}/mqdefault.jpg" alt="" loading="lazy">
+          ${v.length ? `<span class="video-more__len">${escapeHtml(v.length)}</span>` : ''}
+        </span>
+        <span class="video-more__meta">
+          <span class="video-more__role">${escapeHtml(VIDEO_ROLE_LABELS[v.role] || 'Also watch')}</span>
+          <span class="video-more__title">${escapeHtml(v.title || '')}</span>
+          <span class="video-more__channel">${escapeHtml(v.channel || 'YouTube')}</span>
+          ${v.why ? `<span class="video-more__why">${escapeHtml(v.why)}</span>` : ''}
+        </span>
+      </a>`).join('');
+    return cards ? `
+      <div class="video-more">
+        <h3 class="video-more__heading">More videos on this topic</h3>
+        <div class="video-more__list">${cards}</div>
+      </div>` : '';
   }
 
   /**
