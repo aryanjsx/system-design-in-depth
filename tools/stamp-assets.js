@@ -13,13 +13,14 @@ const root = path.join(__dirname, '..');
 const check = process.argv.includes('--check');
 const pages = ['index.html', 'projects/index.html'].filter(p => fs.existsSync(path.join(root, p)));
 
-const hashOf = buf => crypto.createHash('sha1').update(buf).digest('hex').slice(0, 10);
+// Normalise CRLF so a Windows checkout (core.autocrlf) hashes the same as the deployed LF files
+const hashOf = buf => crypto.createHash('sha1').update(buf.toString('utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 10);
 
 function hashDir(rel) {
   const dir = path.join(root, rel);
   if (!fs.existsSync(dir)) return '0';
   const h = crypto.createHash('sha1');
-  for (const f of fs.readdirSync(dir).sort()) h.update(f).update(fs.readFileSync(path.join(dir, f)));
+  for (const f of fs.readdirSync(dir).sort()) h.update(f).update(fs.readFileSync(path.join(dir, f), 'utf8').replace(/\r\n/g, '\n'));
   return h.digest('hex').slice(0, 10);
 }
 
