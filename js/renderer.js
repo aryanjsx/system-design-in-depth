@@ -172,16 +172,6 @@ window.Renderer = (() => {
           <button class="completion-toggle${isCompleted ? ' completed' : ''}" onclick="App.toggleComplete('${slug}')">
             ${isCompleted ? icons.check + ' Completed' : icons.circle + ' Mark Complete'}
           </button>
-          <button class="btn btn--sm btn--outline" id="skim-mode-toggle" onclick="
-            const article = document.querySelector('article.lesson-content');
-            if (article) {
-              article.classList.toggle('skim-mode');
-              this.classList.toggle('active');
-              this.textContent = article.classList.contains('skim-mode') ? '📖 Full Mode' : '⚡ Skim Mode';
-            }
-          " title="Toggle Skim Mode (focus on key points & diagrams)">
-            ⚡ Skim Mode
-          </button>
           <a href="#cheatsheet/${mod.id}" class="btn btn--sm btn--outline" title="View printable cheat sheet for this module">
             📄 Cheat Sheet
           </a>
